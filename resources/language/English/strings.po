@@ -1432,6 +1432,10 @@ msgid "Please select a language!"
 msgstr ""
 
 msgctxt "Alert"
+msgid "Unable to save settings! Please use a modern browser capable of local storage and enable it\'s access for this site."
+msgstr ""
+
+msgctxt "Alert"
 msgid "Are you sure?"
 msgstr ""
 

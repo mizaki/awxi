@@ -903,49 +903,49 @@
 
     var $settingsButton = $('<a href="" class="settings"></a>');
     $settingsButton.click(function() {
-      var lazyload = mkf.cookieSettings.get('lazyload', 'no');
-      var timeout = mkf.cookieSettings.get('timeout', 20);
-      var limitVideo = mkf.cookieSettings.get('limitVideo', 25);
-      var limitMusicVideo = mkf.cookieSettings.get('limitMusicVideo', 25);
-      var limitTV = mkf.cookieSettings.get('limitTV', 25);
-      var limitArtists = mkf.cookieSettings.get('limitArtists', 25);
-      var limitAlbums = mkf.cookieSettings.get('limitAlbums', 25);
-      var limitSongs = mkf.cookieSettings.get('limitSongs', 25);
-      var ui = mkf.cookieSettings.get('ui', 'uni');
-      var oldui = mkf.cookieSettings.get('ui');
+      var lazyload = (awxUI.settings.lazyload? awxUI.settings.lazyload : 'no');
+      var timeout = (awxUI.settings.timeout? awxUI.settings.timeout : 20);
+      var limitVideo = (awxUI.settings.limitMovies? awxUI.settings.limitMovies : 25);
+      var limitMusicVideo = (awxUI.settings.limitMV? awxUI.settings.limitMV : 25);
+      var limitTV = (awxUI.settings.limitTV? awxUI.settings.limitTV : 25);
+      var limitArtists = (awxUI.settings.limitArtists? awxUI.settings.limitArtists : 25);
+      var limitAlbums = (awxUI.settings.limitAlbums? awxUI.settings.limitAlbums : 25);
+      var limitSongs = (awxUI.settings.limitSongs? awxUI.settings.limitSongs : 25);
+      //var ui = mkf.cookieSettings.get('ui', 'uni');
+      //var oldui = mkf.cookieSettings.get('ui');
       var lang = mkf.cookieSettings.get('lang', 'en');
-      var watched = mkf.cookieSettings.get('watched', 'no');
-      var hidewatchedmark = mkf.cookieSettings.get('hidewatchedmark', 'no');
+      var watched = (awxUI.settings.watched? 'yes' : 'no');
+      var hidewatchedmark = (awxUI.settings.hideWatchedMark? 'yes' : 'no');
       //var cinex = mkf.cookieSettings.get('cinex', 'no');
-      var hoverOrClick = mkf.cookieSettings.get('hoverOrClick', 'no');
+      var hoverOrClick = (awxUI.settings.hoverOrClick? 'yes' : 'no');
       //var listview = mkf.cookieSettings.get('listview', 'no');
-      var artistsView = mkf.cookieSettings.get('artistsView', 'list');
-      var artistsPath = mkf.cookieSettings.get('artistsPath');
-      var albumsView = mkf.cookieSettings.get('albumsView', 'cover');
-      var albumsViewRec = mkf.cookieSettings.get('albumsViewRec', 'cover');
-      var filmView = mkf.cookieSettings.get('filmView', 'poster');
-      var filmViewRec = mkf.cookieSettings.get('filmViewRec', 'poster');
-      var filmViewSets = mkf.cookieSettings.get('filmViewSets', 'poster');
-      var TVView = mkf.cookieSettings.get('TVView', 'banner');
-      var TVViewRec = mkf.cookieSettings.get('TVViewRec', 'infolist');
-      var EpView = mkf.cookieSettings.get('EpView', 'listover');
-      var usefanart = mkf.cookieSettings.get('usefanart', 'no');
-      var usextrafanart = mkf.cookieSettings.get('usextrafanart', 'no');
-      var filmSort = mkf.cookieSettings.get('filmSort', 'label');
-      var TVSort = mkf.cookieSettings.get('TVSort', 'label');
-      var EpSort = mkf.cookieSettings.get('EpSort', 'episode');
-      var albumSort = mkf.cookieSettings.get('albumSort', 'album');
-      var mvSort = mkf.cookieSettings.get('mvSort', 'artist');
-      var mvdesc = mkf.cookieSettings.get('mvdesc', 'no');
-      var mdesc = mkf.cookieSettings.get('mdesc', 'no');
-      var tvdesc = mkf.cookieSettings.get('tvdesc', 'no');
-      var epdesc = mkf.cookieSettings.get('epdesc', 'no');
-      var adesc = mkf.cookieSettings.get('adesc', 'no');
-      var startPage = mkf.cookieSettings.get('startPage', 'recentTV');
-      var showTags = mkf.cookieSettings.get('showTags', 'yes');
-      var rotateCDart = mkf.cookieSettings.get('rotateCDart', 'no');
+      var artistsView = (awxUI.settings.artistsView? awxUI.settings.artistsView : 'list');
+      var artistsPath = (awxUI.settings.artistsPath? awxUI.settings.artistsPath : '');
+      var albumsView = (awxUI.settings.albumsView? awxUI.settings.albumsView : 'cover');
+      var albumsViewRec = (awxUI.settings.albumsViewRec? awxUI.settings.albumsViewRec : 'cover');
+      var filmView = (awxUI.settings.filmView? awxUI.settings.filmView : 'poster');
+      var filmViewRec = (awxUI.settings.filmViewRec? awxUI.settings.filmViewRec : 'poster');
+      var filmViewSets = (awxUI.settings.filmViewSets? awxUI.settings.filmViewSets : 'poster');
+      var TVView = (awxUI.settings.TVView? awxUI.settings.TVView : 'banner');
+      var TVViewRec = (awxUI.settings.TVViewRec? awxUI.settings.TVViewRec : 'infolist');
+      var EpView = (awxUI.settings.EpView? awxUI.settings.EpView : 'listover');
+      var usefanart = (awxUI.settings.useFanart? 'yes' : 'no');
+      var usextrafanart = (awxUI.settings.useXtraFanart? 'yes' : 'no');
+      var filmSort = (awxUI.settings.filmSort? awxUI.settings.filmSort : 'label');
+      var TVSort = (awxUI.settings.tvSort? awxUI.settings.tvSort : 'label');
+      var EpSort = (awxUI.settings.epSort? awxUI.settings.epSort : 'episode');
+      var albumSort = (awxUI.settings.albumSort? awxUI.settings.albumSort : 'album');
+      var mvSort = (awxUI.settings.musicVideosSort? awxUI.settings.musicVideosSort : 'artist');
+      var mvdesc = (awxUI.settings.musicVideosdesc == 'descending'? 'descending' : 'ascending');
+      var mdesc = (awxUI.settings.mdesc == 'descending'? 'descending' : 'ascending');
+      var tvdesc = (awxUI.settings.tvdesc == 'descending'? 'descending' : 'ascending');
+      var epdesc = (awxUI.settings.epdesc == 'descending'? 'descending' : 'ascending');
+      var adesc = (awxUI.settings.adesc == 'descending'? 'descending' : 'ascending');
+      var startPage = (awxUI.settings.startPage? awxUI.settings.startPage : 'recentTV');
+      var showTags = (awxUI.settings.showTags? awxUI.settings.showTags : 'yes');
+      var rotateCDart = (awxUI.settings.rotateCDart? awxUI.settings.rotateCDart : 'no');
       var manualPath = mkf.cookieSettings.get('manualPath');
-      var preferLogos = mkf.cookieSettings.get('preferLogos');
+      var preferLogos = (awxUI.settings.preferLogos? 'yes' : 'no');
 
       var dialogHandle = mkf.dialog.show(
         {
@@ -1266,227 +1266,48 @@
           alert(mkf.lang.get('Please select a language!', 'Alert'));
           return false;
         }
-
-        // set new settings
-        /*  if (document.settingsForm.userinterface[1].checked == true) {
-            ui = 'light';
-          } else if ( document.settingsForm.userinterface[0].checked == true) {
-            ui = 'default';
-          } else if ( document.settingsForm.userinterface[2].checked == true) {
-            ui = 'lightDark';
-          } else if ( document.settingsForm.userinterface[3].checked == true) {
-            ui = 'uni';
-          } else {
-            ui = 'uni';
-          }
-        mkf.cookieSettings.add('ui', ui);*/
         
-        mkf.cookieSettings.add(
-          'startPage',
-          document.settingsForm.startPage.value
-        );
-        
-        /*mkf.cookieSettings.add(
-          'manualPath',
-          document.settingsForm.manual_path.value
-        );
-        awxUI.settings.manualPath = document.settingsForm.manual_path.value;*/
-        
-        mkf.cookieSettings.add(
-          'albumSort',
-          document.settingsSorting.albumSort.value
-        );
+        //Use localStorage
         awxUI.settings.albumSort = document.settingsSorting.albumSort.value;
-        
-        mkf.cookieSettings.add(
-          'adesc',
-          document.settingsSorting.adesc.checked? 'descending' : 'ascending'
-        );
         awxUI.settings.adesc = document.settingsSorting.adesc.checked? 'descending' : 'ascending';
-        
-        mkf.cookieSettings.add(
-          'artistsView',
-          document.settingsViewsMusic.artistsView.value
-        );
         awxUI.settings.artistsView = document.settingsViewsMusic.artistsView.value;
-        
-        mkf.cookieSettings.add(
-          'artistsPath',
-          document.settingsViewsMusic.artists_path.value
-        );
         awxUI.settings.artistsPath = document.settingsViewsMusic.artists_path.value;
-        
-        mkf.cookieSettings.add(
-          'albumsView',
-          document.settingsViewsMusic.albumsView.value
-        );
         awxUI.settings.albumsView = document.settingsViewsMusic.albumsView.value;
-        
-        mkf.cookieSettings.add(
-          'albumsViewRec',
-          document.settingsViewsMusic.albumsViewRec.value
-        );
-        awxUI.settings.albumsViewRec = document.settingsViewsMusic.albumsViewRec.value;
-        
-        mkf.cookieSettings.add(
-          'mvdesc',
-          document.settingsSorting.mvdesc.checked? 'descending' : 'ascending'
-        );
+        awxUI.settings.albumsViewRec = document.settingsViewsMusic.albumsViewRec.value; 
         awxUI.settings.musicVideosdesc = document.settingsSorting.mvdesc.checked? 'descending' : 'ascending';
-        
-        mkf.cookieSettings.add(
-          'mvSort',
-          document.settingsSorting.mvSort.value
-        );
         awxUI.settings.musicVideosSort = document.settingsSorting.mvSort.value;
-        
-        mkf.cookieSettings.add(
-          'tvdesc',
-          document.settingsSorting.tvdesc.checked? 'descending' : 'ascending'
-        );
         awxUI.settings.tvdesc = document.settingsSorting.tvdesc.checked? 'descending' : 'ascending';
-        
-        mkf.cookieSettings.add(
-          'TVSort',
-          document.settingsSorting.TVSort.value
-        );
         awxUI.settings.tvSort = document.settingsSorting.TVSort.value;
-        
-        mkf.cookieSettings.add(
-          'EpSort',
-          document.settingsSorting.EpSort.value
-        );
         awxUI.settings.epSort = document.settingsSorting.EpSort.value;
-        
-        mkf.cookieSettings.add(
-          'epdesc',
-          document.settingsSorting.epdesc.checked? 'descending' : 'ascending'
-        );
         awxUI.settings.epdesc = document.settingsSorting.epdesc.checked? 'descending' : 'ascending';
-        
-        mkf.cookieSettings.add(
-          'filmSort',
-          document.settingsSorting.filmSort.value
-        );
         awxUI.settings.filmSort = document.settingsSorting.filmSort.value
-        
-        mkf.cookieSettings.add(
-          'mdesc',
-          document.settingsSorting.mdesc.checked? 'descending' : 'ascending'
-        );
         awxUI.settings.mdesc = document.settingsSorting.mdesc.checked? 'descending' : 'ascending';
-        
-        mkf.cookieSettings.add(
-          'filmView',
-          document.settingsViewsVideo.filmView.value
-        );
         awxUI.settings.filmView = document.settingsViewsVideo.filmView.value;
-        
-        mkf.cookieSettings.add(
-          'filmViewRec',
-          document.settingsViewsVideo.filmViewRec.value
-        );
         awxUI.settings.filmViewRec = document.settingsViewsVideo.filmViewRec.value;
-        
-        mkf.cookieSettings.add(
-          'filmViewSets',
-          document.settingsViewsVideo.filmViewSets.value
-        );
         awxUI.settings.filmViewSets = document.settingsViewsVideo.filmViewSets.value;
-        
-        mkf.cookieSettings.add(
-          'TVView',
-          document.settingsViewsVideo.TVView.value
-        );
         awxUI.settings.TVView = document.settingsViewsVideo.TVView.value;
-        
-        mkf.cookieSettings.add(
-          'TVViewRec',
-          document.settingsViewsVideo.TVViewRec.value
-        );
         awxUI.settings.TVViewRec = document.settingsViewsVideo.TVViewRec.value;
-        
-        mkf.cookieSettings.add(
-          'EpView',
-          document.settingsViewsVideo.EpView.value
-        );
         awxUI.settings.EpView = document.settingsViewsVideo.EpView.value;
-        
-        mkf.cookieSettings.add(
-          'lazyload',
-          document.settingsForm.lazyload.checked? 'yes' : 'no'
-        );
         awxUI.settings.lazyload = document.settingsForm.lazyload.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'showTags',
-          document.settingsForm.showTags.checked? 'yes' : 'no'
-        );
         awxUI.settings.showTags = document.settingsForm.showTags.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'rotateCDart',
-          document.settingsForm.rotateCDart.checked? 'yes' : 'no'
-        );
         awxUI.settings.rotateCDart = document.settingsForm.rotateCDart.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'preferLogos',
-          document.settingsForm.preferLogos.checked? 'yes' : 'no'
-        );
         awxUI.settings.preferLogos = document.settingsForm.preferLogos.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'usefanart',
-          document.settingsForm.usefanart.checked? 'yes' : 'no'
-        );
         if (awxUI.settings.useFanart && !document.settingsForm.usefanart.checked? true : false) {
           //Change in fan art, may need to remove current.
           xbmc.clearBackground();
         }
         awxUI.settings.useFanart = document.settingsForm.usefanart.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'usextrafanart',
-          document.settingsForm.usextrafanart.checked? 'yes' : 'no'
-        );
         awxUI.settings.useXtraFanart = document.settingsForm.usextrafanart.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'watched',
-          document.settingsViewsVideo.watched.checked? 'yes' : 'no'
-        );
         awxUI.settings.watched = document.settingsViewsVideo.watched.checked? true : false;
-        
-        mkf.cookieSettings.add(
-          'hidewatchedmark',
-          document.settingsViewsVideo.hidewatchedmark.checked? 'yes' : 'no'
-        );
         awxUI.settings.hideWatchedMark = document.settingsViewsVideo.hidewatchedmark.checked? true : false;
-        
-        /*mkf.cookieSettings.add(
-          'cinex',
-          document.settingsViewsVideo.cinex.checked? 'yes' : 'no'
-        );*/
-        
-        mkf.cookieSettings.add(
-          'hoverOrClick',
-          document.settingsForm.hoverOrClick.checked? 'yes' : 'no'
-        );
         awxUI.settings.hoverOrClick = document.settingsForm.hoverOrClick.checked? 'click' : 'mouseenter';
-        
-        mkf.cookieSettings.add(
-          'lang',
-          document.settingsForm.lang.options[document.settingsForm.lang.selectedIndex].value
-        );
+        awxUI.settings.startPage = document.settingsForm.startPage.value;
 
-        mkf.cookieSettings.add('timeout', timeout);
-        mkf.cookieSettings.add('limitArtists', limitArtists);
-        mkf.cookieSettings.add('limitAlbums', limitAlbums);
-        mkf.cookieSettings.add('limitSongs', limitSongs);
-        mkf.cookieSettings.add('limitVideo', limitVideo);
-        mkf.cookieSettings.add('limitMusicVideo', limitMusicVideo);
-        mkf.cookieSettings.add('limitTV', limitTV);
+        mkf.cookieSettings.add(
+        'lang',
+        document.settingsForm.lang.options[document.settingsForm.lang.selectedIndex].value
+        );
+        
         awxUI.settings.timeout = timeout;
         awxUI.settings.limitMovies = limitVideo;
         awxUI.settings.limitMV = limitMusicVideo;
@@ -1495,6 +1316,11 @@
         awxUI.settings.limitAlbums = limitAlbums;
         awxUI.settings.limitSongs = limitSongs;
 
+        if (localStorage) {
+          localStorage.setItem('AWXi', JSON.stringify(awxUI.settings));
+        } else {
+          alert(mkf.lang.get('Unable to save settings! Please use a modern browser capable of local storage and enable it\'s access for this site.', 'Alert'));
+        }
         /*if (oldui != ui) alert(mkf.lang.get('settings_need_to_reload_awx'));*/
         mkf.dialog.close(dialogHandle);
 
