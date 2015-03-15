@@ -3304,11 +3304,14 @@ var xbmc = {};
         
         var useFanart = mkf.cookieSettings.get('usefanart', 'no')=='yes'? true : false;
         var showInfoTags = awxUI.settings.showTags;
+        if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
+        var WSmessageHandle = mkf.messageLog.show(mkf.lang.get('Attempting to connect to websocket...', 'Popup message with addition'));
+        //mkf.messageLog.show(mkf.lang.get('Attempting to connect to websocket...', 'Popup message'), mkf.messageLog.status.error, 10000);
         
         var wsConn = 'ws://' + location.hostname + ':9090/jsonrpc?awxi';
         ws = new WebSocket(wsConn);
         ws.onopen = function (e) {
-          
+          mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('OK', 'Popup message addition'), 2000, mkf.messageLog.status.success);
           if (typeof xbmc.activePlayer === 'undefined') { xbmc.activePlayer = 'none'; }
           if (typeof xbmc.activePlayerid === 'undefined') { xbmc.activePlayerid = -1; }
           if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
@@ -3927,14 +3930,26 @@ var xbmc = {};
           }
         };
         ws.onclose = function (e) {
+          xbmc.inErrorState++;
+          mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
+          
           //Check to see if XBMC /is/ running
           xbmc.sendCommand(
             '{"jsonrpc": "2.0", "method": "JSONRPC.Ping",  "id": "WSClosePing"}',
 
             function (response) {
               if (response.result == 'pong') {
-                  //XBMC is responding. Relaunch websocket
+                //XBMC is responding. Relaunch websocket
+                if (xbmc.inErrorState < 4) {
+                  console.log('ws.close retrying... ' + xbmc.inErrorState);
+                  mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, retrying...', 'Popup message'), mkf.messageLog.status.error, 5000);
                   xbmc.wsListener();
+                } else {
+                  //Cannot open websocket, switch to polling
+                  console.log('Failed to open websocket after 5 attempts, switching to polling');
+                  mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 5000);
+                  setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
+                }
               } else {
                 $('body').empty();
                 mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
