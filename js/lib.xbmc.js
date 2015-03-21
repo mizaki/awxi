@@ -3166,7 +3166,7 @@ var xbmc = {};
         $('div#lyrics div').removeClass('current');
         $('div#lyrics span.time').filter(function() { return $.text([this]) == '#' + xbmc.periodicUpdater.progress }).parent().addClass('current');
         //$('div#lyrics span.time:contains(#' + xbmc.periodicUpdater.progress + ')').parent().addClass('current');
-        $('div#lyrics .current').ScrollTo({offsetTop: $('div#lyricContent').height()/2 });
+        $.scrollTo($('div#lyricContent .lyricline.current'));
         //$('div#lyrics .current')[0].scrollIntoView( true );
       }
       //Initial time grab and checking for time slip every 10%.
@@ -3305,6 +3305,260 @@ var xbmc = {};
         var useFanart = mkf.cookieSettings.get('usefanart', 'no')=='yes'? true : false;
         var showInfoTags = awxUI.settings.showTags;
         if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
+        if (typeof xbmc.activePlayer === 'undefined') { xbmc.activePlayer = 'none'; }
+        if (typeof xbmc.activePlayerid === 'undefined') { xbmc.activePlayerid = -1; }
+        if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
+        if (typeof xbmc.playerPartyMode === 'undefined') { xbmc.playerPartyMode = false; }
+        //Wait for window to draw - FF mostly.
+          setTimeout(function() {
+            //Initial status readings, after rely on notifications.
+            xbmc.sendCommand(
+              '{"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": "OPAct"}',
+
+              function (response) {
+                var playerActive = response.result;
+                //need to cover slideshow
+                if (playerActive == '') {
+                  xbmc.activePlayer = 'none';
+                } else {
+                  xbmc.activePlayer = playerActive[0].type;
+                  xbmc.activePlayerid = playerActive[0].playerid;
+                  
+
+                  if (xbmc.activePlayer != 'none') {
+                    xbmc.sendCommand(
+                      '{"jsonrpc":"2.0","id":"OPProp","method":"Player.GetProperties","params":{ "playerid":' + xbmc.activePlayerid + ',"properties":["speed", "shuffled", "repeat", "subtitleenabled", "time", "totaltime", "position", "currentaudiostream", "partymode"] } }',
+
+                      function (response) {
+                        var currentPlayer = response.result;
+                        //If playing (not paused) start time counter
+                        if (currentPlayer.speed != 0) { xbmc.pollTimeStart() };
+                        var curtime = 0;
+                        var curruntime = 0;
+                        var curPlayItemNum = currentPlayer.position;
+                        xbmc.playerPartyMode = currentPlayer.partymode;
+                        
+                        //Change highlights rather than reload playlist <-- is the required as on it's done on playlist draw in ui.views?
+                        if (xbmc.activePlayer == 'audio') {
+                          xbmc.musicPlaylist.find('.playlistItemCur').removeClass('playlistItemCur');
+                          xbmc.musicPlaylist.find('.apli' + curPlayItemNum).addClass('playlistItemCur');
+                          xbmc.periodicUpdater.curPlaylistNum = curPlayItemNum;
+                          //awxUI.onMusicPlaylistShow();
+                        } else if (xbmc.activePlayer == 'video') {
+                          /*$("#vpli"+xbmc.periodicUpdater.curPlaylistNum).attr("class","playlistItem");
+                          $("#vpli"+curPlayItemNum).attr("class","playlistItemCur");*/
+                          xbmc.videoPlaylist.find('.playlistItemCur').removeClass("playlistItemCur");
+                          xbmc.videoPlaylist.find('.vpli' + curPlayItemNum).addClass('playlistItemCur');
+                          xbmc.periodicUpdater.curPlaylistNum = curPlayItemNum;
+                          //awxUI.onVideoPlaylistShow();
+                        }
+                        
+                        curtime = xbmc.timeToSec(currentPlayer.time);
+                        curruntime = xbmc.timeToSec(currentPlayer.totaltime);
+                        
+                        if (xbmc.periodicUpdater.progress != curtime) {
+                          xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
+                          xbmc.periodicUpdater.progress = curtime;
+                          xbmc.periodicUpdater.progressEnd = curruntime;
+                        }
+                        if (currentPlayer.speed != 0 && currentPlayer.speed != 1 ) {
+                          // not playing
+                          if (xbmc.periodicUpdater.playerStatus != 'stopped') {
+                            xbmc.periodicUpdater.playerStatus = 'stopped';
+                            xbmc.periodicUpdater.firePlayerStatusChanged('stopped');
+                          }
+
+                        } else if (currentPlayer.speed == 0 && xbmc.periodicUpdater.playerStatus != 'paused') {
+                          xbmc.periodicUpdater.playerStatus = 'paused';
+                          xbmc.periodicUpdater.firePlayerStatusChanged('paused');
+
+                        } else if (currentPlayer.speed == 1 && xbmc.periodicUpdater.playerStatus != 'playing') {
+                          xbmc.periodicUpdater.playerStatus = 'playing';
+                          xbmc.periodicUpdater.firePlayerStatusChanged('playing');
+                        }
+                        
+                        //shuffle status changed?
+                        shuffle = currentPlayer.shuffled;
+                        if (xbmc.periodicUpdater.shuffleStatus != shuffle) {
+                          xbmc.periodicUpdater.shuffleStatus = shuffle;
+                          xbmc.periodicUpdater.firePlayerStatusChanged(shuffle? 'shuffleOn': 'shuffleOff');
+                        }
+                        
+                        //repeat off, one, all
+                        repeat = currentPlayer.repeat;
+                        if (xbmc.periodicUpdater.repeatStatus != repeat) {
+                          xbmc.periodicUpdater.repeatStatus = repeat;
+                          xbmc.periodicUpdater.firePlayerStatusChanged(repeat);
+                        }
+                        
+                        //subs enabled
+                        subs = currentPlayer.subtitleenabled;
+                        if (xbmc.periodicUpdater.subsenabled != subs) {
+                          xbmc.periodicUpdater.subsenabled = subs;
+                        }
+
+                        //Stream info in footer bar. Uni UI only
+                        if (xbmc.activePlayer == 'audio' && showInfoTags) {
+                          var streamdetails = {
+                            aCodec: 'Unknown',
+                            channels: 0,
+                            aStreams: 0,
+                            bitrate: 0
+                          };
+          
+                          if (typeof(currentPlayer.currentaudiostream) != 'undefined') {
+                            streamdetails.channels = currentPlayer.currentaudiostream.channels;
+                            //Set audio icon
+                            streamdetails.aCodec = xbmc.getAcodec(currentPlayer.currentaudiostream.codec);
+                            
+                            $('#streamdets .channels').addClass('channels' + streamdetails.channels);
+                            $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
+                          };
+                        }
+                      
+                      }
+                    );
+                    var request = '';
+
+                    if (xbmc.activePlayer == 'audio') {
+                      request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "duration", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 0 }, "id": "OPGetItem"}';
+
+                    } else if (xbmc.activePlayer == 'video') {
+                      request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "season", "episode", "duration", "showtitle", "tvshowid", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 1 }, "id": "OPGetItem"}';
+                    }
+                  
+                    // Current file changed?
+                    xbmc.sendCommand(
+                      request,
+
+                      function (response) {
+                        var currentItem = response.result.item;
+                        
+                        //PVR reports no file attrib. Copy title to file
+                        if (currentItem.type == 'channel') { currentItem.file = currentItem.title };
+                        
+                        xbmc.getExtraArt({path: currentItem.file, type: 'extrafanart', library: currentItem.type, tvid: currentItem.tvshowid}, function(xart) { xbmc.xart = xart } );
+                        
+                        if ( xbmc.$backgroundFanart != xbmc.getThumbUrl(currentItem.fanart) && useFanart && currentItem.fanart != '' ) {
+                          xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
+                          $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
+                        } else if (useFanart && currentItem.fanart == '') {
+                          xbmc.$backgroundFanart = xbmc.getThumbUrl('images/black.gif');
+                          $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
+                        };
+                        
+                        if (xbmc.periodicUpdater.currentlyPlayingFile != currentItem.file) {
+                          xbmc.periodicUpdater.currentlyPlayingFile = currentItem.file;
+                          $.extend(currentItem, {
+                            xbmcMediaType: xbmc.activePlayer
+                          });
+                          xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
+
+                          xbmc.getNextPlaylistItem({
+                            'playlistid': xbmc.activePlayerid,
+                            onSuccess: function(nextItem) {
+                              if (typeof nextItem === 'undefined') {
+                                xbmc.periodicUpdater.nextPlayingFile = '';
+                                xbmc.periodicUpdater.fireNextPlayingChanged('');
+                              } else {
+                                
+                                $.extend(nextItem, {
+                                  xbmcMediaType: xbmc.activePlayer
+                                });
+                                xbmc.periodicUpdater.nextPlayingFile = nextItem.file;
+                                xbmc.periodicUpdater.fireNextPlayingChanged(nextItem);
+                              }
+                            },
+                            onError: function() {
+                              xbmc.periodicUpdater.nextPlayingFile = mkf.lang.get('N/A', 'Label');
+                            }
+                          });
+
+                          //Footer stream details for video
+                          if (xbmc.activePlayer == 'video' && showInfoTags) {
+
+                            var streamdetails = {
+                              vFormat: 'SD',
+                              vCodec: 'Unknown',
+                              aCodec: 'Unknown',
+                              channels: 0,
+                              aStreams: 0,
+                              hasSubs: false,
+                              aLang: '',
+                              aspect: 0,
+                              vwidth: 0
+                            };
+                            
+                            if (typeof(currentItem.streamdetails) != 'undefined') {
+                              if (currentItem.streamdetails.video.length != 0) {
+
+                                if (currentItem.streamdetails.subtitle) { streamdetails.hasSubs = true };
+                                if (currentItem.streamdetails.audio.length != 0) {
+                                  streamdetails.channels = currentItem.streamdetails.audio[0].channels;
+                                  streamdetails.aStreams = currentItem.streamdetails.audio.length;
+                                  //$.each(currentItem.streamdetails.audio, function(i, audio) { streamdetails.aLang += audio.language + ' ' } );
+                                  //if ( streamdetails.aLang == ' ' ) { streamdetails.aLang = mkf.lang.get('label_not_available') };
+                                };
+                                streamdetails.aspect = xbmc.getAspect(currentItem.streamdetails.video[0].aspect);
+                                //Get video standard
+                                streamdetails.vFormat = xbmc.getvFormat(currentItem.streamdetails.video[0].width);
+                                //Get video codec
+                                streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
+                                //Set audio icon
+                                streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
+                                  
+                                $('#streamdets .vFormat').addClass('vFormat' + streamdetails.vFormat);
+                                $('#streamdets .aspect').addClass('aspect' + streamdetails.aspect);
+                                $('#streamdets .channels').addClass('channels' + streamdetails.channels);
+                                $('#streamdets .vCodec').addClass('vCodec' + streamdetails.vCodec);
+                                $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
+                                (streamdetails.hasSubs? $('#streamdets .vSubtitles').css('display', 'block') : $('#streamdets .vSubtitles').css('display', 'none'));
+                              };
+                            };
+                          }
+                        };
+                      }
+                    );
+                  }
+
+                }
+              },
+              
+              function(response) {
+                xbmc.activePlayer = 'none'; // ERROR
+                xbmc.inErrorState ++;
+                if (xbmc.inErrorState == 5) {
+                  $('body').empty();
+                  mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
+                  xbmc.setHasQuit();
+                };
+              }
+            );
+            
+            xbmc.sendCommand(
+              '{"jsonrpc": "2.0", "method": "Application.GetProperties", "params": { "properties": [ "volume", "muted" ] }, "id": "OAppVol"}',
+
+              function (response) {
+                var volume = response.result.volume;
+                var muted = response.result.muted;
+                if (volume != xbmc.periodicUpdater.lastVolume) {
+                  xbmc.periodicUpdater.lastVolume = volume;
+                    $.each(xbmc.periodicUpdater.volumeChangedListener, function(i, listener)  {
+                      listener(volume);
+                  });
+                };
+                if (muted != xbmc.periodicUpdater.muteStatus) {
+                  xbmc.periodicUpdater.muteStatus = muted;
+                  if (muted) {
+                    xbmc.periodicUpdater.firePlayerStatusChanged('muteOn');
+                  } else {
+                    xbmc.periodicUpdater.firePlayerStatusChanged('muteOff');
+                  };
+                };
+              }
+            );
+          }, 2000);
+          
         var WSmessageHandle = mkf.messageLog.show(mkf.lang.get('Attempting to connect to websocket...', 'Popup message with addition'));
         //mkf.messageLog.show(mkf.lang.get('Attempting to connect to websocket...', 'Popup message'), mkf.messageLog.status.error, 10000);
         
@@ -3312,264 +3566,40 @@ var xbmc = {};
         ws = new WebSocket(wsConn);
         ws.onopen = function (e) {
           mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('OK', 'Popup message addition'), 2000, mkf.messageLog.status.success);
-          if (typeof xbmc.activePlayer === 'undefined') { xbmc.activePlayer = 'none'; }
-          if (typeof xbmc.activePlayerid === 'undefined') { xbmc.activePlayerid = -1; }
-          if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
-          if (typeof xbmc.playerPartyMode === 'undefined') { xbmc.playerPartyMode = false; }
-          //Wait for window to draw - FF mostly.
-          setTimeout(function() {
-              //Initial status readings, after rely on notifications.
-              xbmc.sendCommand(
-                '{"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": "OPAct"}',
+          
 
-                function (response) {
-                  var playerActive = response.result;
-                  //need to cover slideshow
-                  if (playerActive == '') {
-                    xbmc.activePlayer = 'none';
-                  } else {
-                    xbmc.activePlayer = playerActive[0].type;
-                    xbmc.activePlayerid = playerActive[0].playerid;
-                    
-
-                    if (xbmc.activePlayer != 'none') {
-                      xbmc.sendCommand(
-                        '{"jsonrpc":"2.0","id":"OPProp","method":"Player.GetProperties","params":{ "playerid":' + xbmc.activePlayerid + ',"properties":["speed", "shuffled", "repeat", "subtitleenabled", "time", "totaltime", "position", "currentaudiostream", "partymode"] } }',
-
-                        function (response) {
-                          var currentPlayer = response.result;
-                          //If playing (not paused) start time counter
-                          if (currentPlayer.speed != 0) { xbmc.pollTimeStart() };
-                          var curtime = 0;
-                          var curruntime = 0;
-                          var curPlayItemNum = currentPlayer.position;
-                          xbmc.playerPartyMode = currentPlayer.partymode;
-                          
-                          //Change highlights rather than reload playlist <-- is the required as on it's done on playlist draw in ui.views?
-                          if (xbmc.activePlayer == 'audio') {
-                            xbmc.musicPlaylist.find('.playlistItemCur').removeClass('playlistItemCur');
-                            xbmc.musicPlaylist.find('.apli' + curPlayItemNum).addClass('playlistItemCur');
-                            xbmc.periodicUpdater.curPlaylistNum = curPlayItemNum;
-                            //awxUI.onMusicPlaylistShow();
-                          } else if (xbmc.activePlayer == 'video') {
-                            /*$("#vpli"+xbmc.periodicUpdater.curPlaylistNum).attr("class","playlistItem");
-                            $("#vpli"+curPlayItemNum).attr("class","playlistItemCur");*/
-                            xbmc.videoPlaylist.find('.playlistItemCur').removeClass("playlistItemCur");
-                            xbmc.videoPlaylist.find('.vpli' + curPlayItemNum).addClass('playlistItemCur');
-                            xbmc.periodicUpdater.curPlaylistNum = curPlayItemNum;
-                            //awxUI.onVideoPlaylistShow();
-                          }
-                          
-                          curtime = xbmc.timeToSec(currentPlayer.time);
-                          curruntime = xbmc.timeToSec(currentPlayer.totaltime);
-                          
-                          if (xbmc.periodicUpdater.progress != curtime) {
-                            xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
-                            xbmc.periodicUpdater.progress = curtime;
-                            xbmc.periodicUpdater.progressEnd = curruntime;
-                          }
-                          if (currentPlayer.speed != 0 && currentPlayer.speed != 1 ) {
-                            // not playing
-                            if (xbmc.periodicUpdater.playerStatus != 'stopped') {
-                              xbmc.periodicUpdater.playerStatus = 'stopped';
-                              xbmc.periodicUpdater.firePlayerStatusChanged('stopped');
-                            }
-
-                          } else if (currentPlayer.speed == 0 && xbmc.periodicUpdater.playerStatus != 'paused') {
-                            xbmc.periodicUpdater.playerStatus = 'paused';
-                            xbmc.periodicUpdater.firePlayerStatusChanged('paused');
-
-                          } else if (currentPlayer.speed == 1 && xbmc.periodicUpdater.playerStatus != 'playing') {
-                            xbmc.periodicUpdater.playerStatus = 'playing';
-                            xbmc.periodicUpdater.firePlayerStatusChanged('playing');
-                          }
-                          
-                          //shuffle status changed?
-                          shuffle = currentPlayer.shuffled;
-                          if (xbmc.periodicUpdater.shuffleStatus != shuffle) {
-                            xbmc.periodicUpdater.shuffleStatus = shuffle;
-                            xbmc.periodicUpdater.firePlayerStatusChanged(shuffle? 'shuffleOn': 'shuffleOff');
-                          }
-                          
-                          //repeat off, one, all
-                          repeat = currentPlayer.repeat;
-                          if (xbmc.periodicUpdater.repeatStatus != repeat) {
-                            xbmc.periodicUpdater.repeatStatus = repeat;
-                            xbmc.periodicUpdater.firePlayerStatusChanged(repeat);
-                          }
-                          
-                          //subs enabled
-                          subs = currentPlayer.subtitleenabled;
-                          if (xbmc.periodicUpdater.subsenabled != subs) {
-                            xbmc.periodicUpdater.subsenabled = subs;
-                          }
-
-                          //Stream info in footer bar. Uni UI only
-                          if (xbmc.activePlayer == 'audio' && showInfoTags) {
-                            var streamdetails = {
-                              aCodec: 'Unknown',
-                              channels: 0,
-                              aStreams: 0,
-                              bitrate: 0
-                            };
-            
-                            if (typeof(currentPlayer.currentaudiostream) != 'undefined') {
-                              streamdetails.channels = currentPlayer.currentaudiostream.channels;
-                              //Set audio icon
-                              streamdetails.aCodec = xbmc.getAcodec(currentPlayer.currentaudiostream.codec);
-                              
-                              $('#streamdets .channels').addClass('channels' + streamdetails.channels);
-                              $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
-                            };
-                          }
-                        
-                        }
-                      );
-                      var request = '';
-
-                      if (xbmc.activePlayer == 'audio') {
-                        request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "duration", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 0 }, "id": "OPGetItem"}';
-
-                      } else if (xbmc.activePlayer == 'video') {
-                        request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "season", "episode", "duration", "showtitle", "tvshowid", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 1 }, "id": "OPGetItem"}';
-                      }
-                    
-                      // Current file changed?
-                      xbmc.sendCommand(
-                        request,
-
-                        function (response) {
-                          var currentItem = response.result.item;
-                          
-                          //PVR reports no file attrib. Copy title to file
-                          if (currentItem.type == 'channel') { currentItem.file = currentItem.title };
-                          
-                          xbmc.getExtraArt({path: currentItem.file, type: 'extrafanart', library: currentItem.type, tvid: currentItem.tvshowid}, function(xart) { xbmc.xart = xart } );
-                          
-                          if ( xbmc.$backgroundFanart != xbmc.getThumbUrl(currentItem.fanart) && useFanart && currentItem.fanart != '' ) {
-                            xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
-                            $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
-                          } else if (useFanart && currentItem.fanart == '') {
-                            xbmc.$backgroundFanart = xbmc.getThumbUrl('images/black.gif');
-                            $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
-                          };
-                          
-                          if (xbmc.periodicUpdater.currentlyPlayingFile != currentItem.file) {
-                            xbmc.periodicUpdater.currentlyPlayingFile = currentItem.file;
-                            $.extend(currentItem, {
-                              xbmcMediaType: xbmc.activePlayer
-                            });
-                            xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
-
-                            xbmc.getNextPlaylistItem({
-                              'playlistid': xbmc.activePlayerid,
-                              onSuccess: function(nextItem) {
-                                if (typeof nextItem === 'undefined') {
-                                  xbmc.periodicUpdater.nextPlayingFile = '';
-                                  xbmc.periodicUpdater.fireNextPlayingChanged('');
-                                } else {
-                                  
-                                  $.extend(nextItem, {
-                                    xbmcMediaType: xbmc.activePlayer
-                                  });
-                                  xbmc.periodicUpdater.nextPlayingFile = nextItem.file;
-                                  xbmc.periodicUpdater.fireNextPlayingChanged(nextItem);
-                                }
-                              },
-                              onError: function() {
-                                xbmc.periodicUpdater.nextPlayingFile = mkf.lang.get('N/A', 'Label');
-                              }
-                            });
-
-                            //Footer stream details for video
-                            if (xbmc.activePlayer == 'video' && showInfoTags) {
-
-                              var streamdetails = {
-                                vFormat: 'SD',
-                                vCodec: 'Unknown',
-                                aCodec: 'Unknown',
-                                channels: 0,
-                                aStreams: 0,
-                                hasSubs: false,
-                                aLang: '',
-                                aspect: 0,
-                                vwidth: 0
-                              };
-                              
-                              if (typeof(currentItem.streamdetails) != 'undefined') {
-                                if (currentItem.streamdetails.video.length != 0) {
-
-                                  if (currentItem.streamdetails.subtitle) { streamdetails.hasSubs = true };
-                                  if (currentItem.streamdetails.audio.length != 0) {
-                                    streamdetails.channels = currentItem.streamdetails.audio[0].channels;
-                                    streamdetails.aStreams = currentItem.streamdetails.audio.length;
-                                    //$.each(currentItem.streamdetails.audio, function(i, audio) { streamdetails.aLang += audio.language + ' ' } );
-                                    //if ( streamdetails.aLang == ' ' ) { streamdetails.aLang = mkf.lang.get('label_not_available') };
-                                  };
-                                  streamdetails.aspect = xbmc.getAspect(currentItem.streamdetails.video[0].aspect);
-                                  //Get video standard
-                                  streamdetails.vFormat = xbmc.getvFormat(currentItem.streamdetails.video[0].width);
-                                  //Get video codec
-                                  streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
-                                  //Set audio icon
-                                  streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
-                                    
-                                  $('#streamdets .vFormat').addClass('vFormat' + streamdetails.vFormat);
-                                  $('#streamdets .aspect').addClass('aspect' + streamdetails.aspect);
-                                  $('#streamdets .channels').addClass('channels' + streamdetails.channels);
-                                  $('#streamdets .vCodec').addClass('vCodec' + streamdetails.vCodec);
-                                  $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
-                                  (streamdetails.hasSubs? $('#streamdets .vSubtitles').css('display', 'block') : $('#streamdets .vSubtitles').css('display', 'none'));
-                                };
-                              };
-                            }
-                          };
-                        }
-                      );
-                    }
-
-                  }
-                },
-                
-                function(response) {
-                  xbmc.activePlayer = 'none'; // ERROR
-                  xbmc.inErrorState ++;
-                  if (xbmc.inErrorState == 5) {
-                    $('body').empty();
-                    mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
-                    xbmc.setHasQuit();
-                  };
-                }
-              );
-              
-              xbmc.sendCommand(
-                '{"jsonrpc": "2.0", "method": "Application.GetProperties", "params": { "properties": [ "volume", "muted" ] }, "id": "OAppVol"}',
-
-                function (response) {
-                  var volume = response.result.volume;
-                  var muted = response.result.muted;
-                  if (volume != xbmc.periodicUpdater.lastVolume) {
-                    xbmc.periodicUpdater.lastVolume = volume;
-                      $.each(xbmc.periodicUpdater.volumeChangedListener, function(i, listener)  {
-                        listener(volume);
-                    });
-                  };
-                  if (muted != xbmc.periodicUpdater.muteStatus) {
-                    xbmc.periodicUpdater.muteStatus = muted;
-                    if (muted) {
-                      xbmc.periodicUpdater.firePlayerStatusChanged('muteOn');
-                    } else {
-                      xbmc.periodicUpdater.firePlayerStatusChanged('muteOff');
-                    };
-                  };
-                }
-              );
-          }, 3000);
           //};
         };
         ws.onerror = function (err) {
           console.log(err);
           //TODO Wait a second then check ws state. If it has stopped try to reopen. Count tries and stop at 5+
+          xbmc.inErrorState++;
+          mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
+          
+          //Check to see if XBMC /is/ running
+          xbmc.sendCommand(
+            '{"jsonrpc": "2.0", "method": "JSONRPC.Ping",  "id": "WSClosePing"}',
+
+            function (response) {
+              if (response.result == 'pong') {
+                //XBMC is responding. Relaunch websocket
+                if (xbmc.inErrorState < 4) {
+                  console.log('ws.close retrying... ' + xbmc.inErrorState);
+                  mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, retrying...', 'Popup message'), mkf.messageLog.status.error, 5000);
+                  xbmc.wsListener();
+                } else {
+                  //Cannot open websocket, switch to polling
+                  console.log('Failed to open websocket after 5 attempts, switching to polling');
+                  mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 5000);
+                  setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
+                }
+              } else {
+                $('body').empty();
+                mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
+                xbmc.setHasQuit();
+              }
+            }
+          );
         };
         ws.onmessage = function (e) {
           var JSONRPCnotification = jQuery.parseJSON(e.data);
@@ -3872,9 +3902,12 @@ var xbmc = {};
               mkf.messageLog.show(mkf.lang.get('Finished Video Library Scan', 'Popup message'), mkf.messageLog.status.success, 3000);
             };
             //Clear recent
-            /*awxUI.$musicVideosRecentContent.empty();
+            awxUI.$musicVideosRecentContent.empty();
             awxUI.$tvShowsRecentlyAddedContent.empty();
-            awxUI.$moviesRecentContent.empty();*/
+            awxUI.$moviesRecentContent.empty();
+            awxUI.onTvShowsRecentlyAddedShow();
+            awxUI.onMoviesRecentShow();
+            awxUI.onMusicVideosRecentlyAddedShow();
           break;
           case 'AudioLibrary.OnScanStarted':
             //Set to messageid so we can clear it on finish.
@@ -3931,6 +3964,7 @@ var xbmc = {};
         };
         ws.onclose = function (e) {
           xbmc.inErrorState++;
+          setTimeout(function() {
           mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
           
           //Check to see if XBMC /is/ running
@@ -3957,7 +3991,7 @@ var xbmc = {};
               }
             }
           );
-
+          }, 2000);
         };
 
     }

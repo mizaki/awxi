@@ -1,6 +1,7 @@
 0.7.4
   - Switch from LOTS of cookies to one and local storage.
   - Indicate control keys (for controling Kodi, x=stop, space=pause, etc.) are active.
+  - Better fallback from websocket failure.
 
 0.7.3
   - Lost to the ether!
