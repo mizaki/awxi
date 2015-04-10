@@ -1,7 +1,10 @@
 0.7.4
   - Switch from LOTS of cookies to one and local storage.
   - Indicate control keys (for controling Kodi, x=stop, space=pause, etc.) are active.
+  - Button to switch control keys on and off (in controller view).
+  - Switch control keys back on after a search if they were active beforehand.
   - Better fallback from websocket failure.
+  - Fix lyrics in fullscreen. Requires lyric window to be open.
 
 0.7.3
   - Lost to the ether!

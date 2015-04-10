@@ -176,7 +176,7 @@ var addons = {};
         });
       };
       var lrcDisplay = function(lyrics) {
-        console.log(lyrics);
+        //console.log(lyrics);
         $('#lyrics').empty();
         if (lyrics.lines.length > 0) {
           $('div#lyricInfo').append((lyrics.tags.title !=''? '<span class="label">' + mkf.lang.get('Track:', 'Label') + ' </span><span class="info">' + lyrics.tags.title + '</span> ' : '' ) +

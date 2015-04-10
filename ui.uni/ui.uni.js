@@ -1556,6 +1556,7 @@
                 '<img src="images/empty_banner_film.png" alt="Preload 26" />' +
                 '<img src="images/empty_banner_tv.png" alt="Preload 27" />' +
                 '<img src="images/empty_thumb_tv.png" alt="Preload 28" />' +
+                '<img src="images/emptyActor.png" alt="Preload 29" />' +
 
               '</div>' +
               '<div id="fullscreen" style="display: none; position: absolute; z-index: 60; width: 100%; height: 100%;"><a class="button minimise" href="" title="' + mkf.lang.get('Exit Full Screen', 'Tool tip') + '"></a><a class="button lyrics" href="" title="' + mkf.lang.get('Show Lyrics', 'Tool tip') + '"></a>' +
@@ -1623,9 +1624,9 @@
         //awxUI.settings.remoteActive = ( awxUI.settings.remoteActive? false : true );
         //Duplicate XBMC key functions
         if (!awxUI.settings.remoteActive) {
-          xbmc.inputKeys(true);
+          xbmc.inputKeys('on');
         } else {
-          xbmc.inputKeys(false);
+          xbmc.inputKeys('off');
         };
         
         $('#displayoverlayleft').toggle();
@@ -1662,48 +1663,48 @@
       //Set menu width to largest item. Can't seem to do this with CSS. IE9 and FF work but Chrome doubles parent UL width.
       setTimeout(function() {
       
-      //Show menus so we can grab the widths.
-      $('#navigation ul.mkfMenu .mkfSubMenu1, ul.systemMenu ul').show();
-      
-      $('.mkfSubMenu2').parent().addClass('subMenu');
-      
-      //Set root menu (music and video) width as it can't (QED) be done in CSS. Timeout is to allow the menu to draw.
-      $("#navigation ul.mkfMenu .music .mkfSubMenu1").each(function() { // Loop through all the menu items that got submenu items
-        var Widest=0; 
-        var ThisWidth=0;
+        //Show menus so we can grab the widths.
+        $('#navigation ul.mkfMenu .mkfSubMenu1, ul.systemMenu ul').show();
+        
+        $('.mkfSubMenu2').parent().addClass('subMenu');
+        
+        //Set root menu (music and video) width as it can't (QED) be done in CSS. Timeout is to allow the menu to draw.
+        $("#navigation ul.mkfMenu .music .mkfSubMenu1").each(function() { // Loop through all the menu items that have submenu items
+          var Widest=0; 
+          var ThisWidth=0;
 
-        $($(this).children()).each(function() {
-          ThisWidth=parseInt($(this).css('width'));
+          $($(this).children()).each(function() {
+            ThisWidth=parseInt($(this).css('width'));
 
-          if (ThisWidth>Widest) {
-            Widest=ThisWidth;
-          }
+            if (ThisWidth>Widest) {
+              Widest=ThisWidth;
+            }
+          });
+
+          Widest+='px';
+
+          $(this).hide();
+          $(this).children().children().css('width',Widest);
         });
+        
+        
+        $("#navigation ul.mkfMenu .videos .mkfSubMenu1").each(function() { 
+          var Widest=0; 
+          var ThisWidth=0; 
 
-        Widest+='px';
+          $($(this).children()).each(function() { 
+            ThisWidth=parseInt($(this).css('width'));
 
-        $(this).hide();
-        $(this).children().children().css('width',Widest);
-      });
-      
-      
-      $("#navigation ul.mkfMenu .videos .mkfSubMenu1").each(function() { 
-        var Widest=0; 
-        var ThisWidth=0; 
+            if (ThisWidth>Widest) { 
+              Widest=ThisWidth;
+            }
+          });
 
-        $($(this).children()).each(function() { 
-          ThisWidth=parseInt($(this).css('width'));
+          Widest+='px'; // Add the unit
 
-          if (ThisWidth>Widest) { 
-            Widest=ThisWidth;
-          }
+          $(this).hide();
+          $(this).children().children().css('width',Widest);
         });
-
-        Widest+='px'; // Add the unit
-
-        $(this).hide();
-        $(this).children().children().css('width',Widest);
-      });
       }, 500);
       
       // Hover for menus

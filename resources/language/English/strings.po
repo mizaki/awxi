@@ -139,6 +139,10 @@ msgid "Full Screen"
 msgstr ""
 
 msgctxt "Tool tip"
+msgid "Control Keys"
+msgstr ""
+
+msgctxt "Tool tip"
 msgid "Exit Full Screen"
 msgstr ""
 
@@ -162,8 +166,20 @@ msgctxt "Popup message addition"
 msgid "Failed!"
 msgstr ""
 
+msgctxt "Popup message with addition"
+msgid "Attempting to connect to websocket..."
+msgstr ""
+
 msgctxt "Popup message"
 msgid "Failed to retrieve list!"
+msgstr ""
+
+msgctxt "Popup message"
+msgid "Control keys inactive."
+msgstr ""
+
+msgctxt "Popup message"
+msgid "Control keys active."
 msgstr ""
 
 msgctxt "Popup message"
@@ -357,6 +373,10 @@ msgstr ""
 
 msgctxt "Label"
 msgid "Titles"
+msgstr ""
+
+msgctxt "Label"
+msgid "Cast"
 msgstr ""
 
 msgctxt "Label"
@@ -1129,6 +1149,12 @@ msgstr ""
 msgctxt "Label"
 msgid "Genre:"
 msgid_plural "Genres:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgctxt "Label"
+msgid "Tag:"
+msgid_plural "Tags:"
 msgstr[0] ""
 msgstr[1] ""
 

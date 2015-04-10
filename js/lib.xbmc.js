@@ -71,41 +71,58 @@ var xbmc = {};
     },
 
     inputKeys: function(options) {
-      //Duplicate XBMC key functions
-      if (options) {
-        awxUI.settings.remoteActive = true;
-        $(document).on('keydown', function(e) {
-          //console.log(e.keyCode)
-          if (e.keyCode == 32) { xbmc.control({type: 'play'}); return false; };
-          if (e.keyCode == 88) { xbmc.control({type: 'stop'}); return false; };
-          if (e.keyCode == 37) { xbmc.input({type: 'Left'}); return false; };
-          if (e.keyCode == 39) { xbmc.input({type: 'Right'}); return false; };
-          if (e.keyCode == 38) { xbmc.input({type: 'Up'}); return false; };
-          if (e.keyCode == 40) { xbmc.input({type: 'Down'}); return false; };
-          if (e.keyCode == 13) { xbmc.input({type: 'Select'}); return false; };
-          if (e.keyCode == 73) { xbmc.input({type: 'Info'}); return false; };
-          if (e.keyCode == 67) { xbmc.input({type: 'ContextMenu'}); return false; };
-          if (e.keyCode == 8) { xbmc.input({type: 'Back'}); return false; };
-          if (e.keyCode == 36) { xbmc.input({type: 'Home'}); return false; };
-          if (e.keyCode == 109 || e.keyCode == 189) { xbmc.setVolumeInc({volume: 'decrement'}); return false; };
-          if (e.keyCode == 107 || e.keyCode == 187) { xbmc.setVolumeInc({volume: 'increment'}); return false; };
-          if (e.keyCode == 70) { xbmc.controlSpeed({type: 'increment'}); return false; };
-          if (e.keyCode == 82) { xbmc.controlSpeed({type: 'decrement'}); return false; };
-          if (e.keyCode == 76) { xbmc.setSubtitles({command: 'next'}); return false; };
-          if (e.keyCode == 84) { xbmc.setSubtitles({command: (xbmc.periodicUpdater.subsenabled? 'off' : 'on')}); return false; };
-          if (e.keyCode == 219) { xbmc.executeAction({action: 'bigstepback'}); return false; };
-          if (e.keyCode == 221) { xbmc.executeAction({action: 'bigstepforward'}); return false; };
-          if (e.keyCode == 65) { xbmc.executeAction({action: 'audiodelay'}); return false; };
-          if (e.keyCode == 192) { xbmc.executeAction({action: 'smallstepback'}); return false; };
-          if (e.keyCode == 188) { xbmc.executeAction({action: 'skipprevious'}); return false; };
-          if (e.keyCode == 190) { xbmc.executeAction({action: 'skipnext'}); return false; };
-          if (e.keyCode == 9 || e.keyCode == 27) { xbmc.executeAction({action: 'togglefullscreen'}); return false; };
-        });
-        mkf.messageLog.show(mkf.lang.get('Control keys active.'), mkf.messageLog.status.success, 5000);
-      } else {
+      var inputKeysOn = function() {
+        if (!awxUI.settings.remoteActive) {
+          awxUI.settings.remoteActive = true;
+          //Duplicate XBMC key functions
+          $(document).on('keydown', function(e) {
+            //console.log(e.keyCode)
+            if (e.keyCode == 32) { xbmc.control({type: 'play'}); return false; };
+            if (e.keyCode == 88) { xbmc.control({type: 'stop'}); return false; };
+            if (e.keyCode == 37) { xbmc.input({type: 'Left'}); return false; };
+            if (e.keyCode == 39) { xbmc.input({type: 'Right'}); return false; };
+            if (e.keyCode == 38) { xbmc.input({type: 'Up'}); return false; };
+            if (e.keyCode == 40) { xbmc.input({type: 'Down'}); return false; };
+            if (e.keyCode == 13) { xbmc.input({type: 'Select'}); return false; };
+            if (e.keyCode == 73) { xbmc.input({type: 'Info'}); return false; };
+            if (e.keyCode == 67) { xbmc.input({type: 'ContextMenu'}); return false; };
+            if (e.keyCode == 8) { xbmc.input({type: 'Back'}); return false; };
+            if (e.keyCode == 36) { xbmc.input({type: 'Home'}); return false; };
+            if (e.keyCode == 109 || e.keyCode == 189) { xbmc.setVolumeInc({volume: 'decrement'}); return false; };
+            if (e.keyCode == 107 || e.keyCode == 187) { xbmc.setVolumeInc({volume: 'increment'}); return false; };
+            if (e.keyCode == 70) { xbmc.controlSpeed({type: 'increment'}); return false; };
+            if (e.keyCode == 82) { xbmc.controlSpeed({type: 'decrement'}); return false; };
+            if (e.keyCode == 76) { xbmc.setSubtitles({command: 'next'}); return false; };
+            if (e.keyCode == 84) { xbmc.setSubtitles({command: (xbmc.periodicUpdater.subsenabled? 'off' : 'on')}); return false; };
+            if (e.keyCode == 219) { xbmc.executeAction({action: 'bigstepback'}); return false; };
+            if (e.keyCode == 221) { xbmc.executeAction({action: 'bigstepforward'}); return false; };
+            if (e.keyCode == 65) { xbmc.executeAction({action: 'audiodelay'}); return false; };
+            if (e.keyCode == 192) { xbmc.executeAction({action: 'smallstepback'}); return false; };
+            if (e.keyCode == 188) { xbmc.executeAction({action: 'skipprevious'}); return false; };
+            if (e.keyCode == 190) { xbmc.executeAction({action: 'skipnext'}); return false; };
+            if (e.keyCode == 9 || e.keyCode == 27) { xbmc.executeAction({action: 'togglefullscreen'}); return false; };
+          });
+          $('#inputcontrols32 a.inputcontrols').addClass('active');
+          mkf.messageLog.show(mkf.lang.get('Control keys active.', 'Popup message'), mkf.messageLog.status.success, 5000);
+        }
+      }
+      var inputKeysOff = function() {
         awxUI.settings.remoteActive = false;
         $(document).off('keydown');
-        mkf.messageLog.show(mkf.lang.get('Control keys inactive.'), mkf.messageLog.status.success, 5000);
+        $('#inputcontrols32 a.inputcontrols').removeClass('active');
+        mkf.messageLog.show(mkf.lang.get('Control keys inactive.', 'Popup message'), mkf.messageLog.status.success, 5000);
+      }
+      
+      if (options == 'on') {
+        inputKeysOn();
+      } else if (options == 'toggle') {
+        if (awxUI.settings.remoteActive) {
+          inputKeysOff();
+        } else {
+          inputKeysOn();
+        }
+      } else {
+        inputKeysOff();
       };
     },
     
@@ -2181,7 +2198,7 @@ var xbmc = {};
       $.extend(settings, options);
 
       xbmc.sendCommand(
-        '{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovieDetails", "params": { "movieid": ' + settings.movieid + ', "properties": ["art", "genre", "director", "plot", "title", "originaltitle", "runtime", "year", "rating", "thumbnail", "playcount", "trailer", "cast", "resume", "file", "tagline", "set", "setid", "lastplayed", "studio", "mpaa", "votes", "streamdetails", "writer", "fanart", "imdbnumber"] },  "id": 2}',
+        '{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovieDetails", "params": { "movieid": ' + settings.movieid + ', "properties": ["art", "genre", "director", "plot", "title", "tag", "originaltitle", "runtime", "year", "rating", "thumbnail", "playcount", "trailer", "cast", "resume", "file", "tagline", "set", "setid", "lastplayed", "studio", "mpaa", "votes", "streamdetails", "writer", "fanart", "imdbnumber"] },  "id": 2}',
         function(response) {
           settings.onSuccess(response.result.moviedetails);
         },
@@ -2264,7 +2281,7 @@ var xbmc = {};
       $.extend(settings, options);
 
       xbmc.sendCommand(
-        '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShowDetails", "params": { "tvshowid": ' + settings.tvshowid + ', "properties": [ "art", "votes", "premiered", "cast", "genre", "plot", "title", "originaltitle", "year", "rating", "thumbnail", "playcount", "file", "fanart", "episode"] }, "id": 1}',
+        '{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShowDetails", "params": { "tvshowid": ' + settings.tvshowid + ', "properties": [ "art", "votes", "premiered", "cast", "tag", "genre", "plot", "title", "originaltitle", "year", "rating", "thumbnail", "playcount", "file", "fanart", "episode"] }, "id": 1}',
         function(response) {
           settings.onSuccess(response.result.tvshowdetails);
         },
@@ -3627,7 +3644,8 @@ var xbmc = {};
             
             if (pollTimeRunning === false) { xbmc.pollTimeStart() };
             
-            if (xbmc.lyrics) { addons.culrcLyrics() };
+            //Add detail as getting previous lyrics
+            if (xbmc.lyrics) { setTimeout(function() { addons.culrcLyrics() }, 1000) };
             //Also activated on item change. Check incase it's slideshow.
             if (xbmc.activePlayer != 'none') {
               var request = '';
@@ -3934,6 +3952,9 @@ var xbmc = {};
             } else {
               mkf.messageLog.show(mkf.lang.get('Finished Video Library Clean', 'Popup message'), mkf.messageLog.status.success, 3000);
             };
+          break;
+          case 'VideoLibrary.OnUpdate':
+            console.log(JSONRPCnotification.params.data);
           break;
           case 'AudioLibrary.OnCleanStarted':
             //Set to messageid so we can clear it on finish.

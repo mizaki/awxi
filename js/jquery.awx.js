@@ -427,7 +427,7 @@
       '<a class="button home" href="" title="' + mkf.lang.get('Home', 'Tool tip') + '"></a><a class="button back" href="" title="' + mkf.lang.get('Back', 'Tool tip') + '"></a><a class="button up" href="" title="' + mkf.lang.get('Up', 'Tool tip') + '"></a>' +
       '<a class="button left" href="" title="' + mkf.lang.get('Left', 'Tool tip') + '"></a><a class="button select" href="" title="' + mkf.lang.get('Select', 'Tool tip') + '"></a><a class="button right" href="" title="' + mkf.lang.get('Right', 'Tool tip') + '"></a>' +
       '<a class="button down" href="" title="' + mkf.lang.get('Down', 'Tool tip') + '"></a><a class="button info" href="" title="' + mkf.lang.get('Information', 'Tool tip') + '"></a><a class="button contextMenu" href="" title="' + mkf.lang.get('Context Menu', 'Tool tip') + '"></a>' +
-      '<a class="button maximise" href="" title="' + mkf.lang.get('Full Screen', 'Tool tip') + '"></a>' +
+      '<a class="button inputcontrols" href="" title="' + mkf.lang.get('Control Keys', 'Tool tip') + '"></a><a class="button maximise" href="" title="' + mkf.lang.get('Full Screen', 'Tool tip') + '"></a>' +
       '</div>');
       
       $inputcontrols.find('.left').click(function() {
@@ -459,6 +459,9 @@
       });
       $inputcontrols.find('.maximise').click(function() {
         xbmc.fullScreen(true); return false;
+      });
+      $inputcontrols.find('.inputcontrols').click(function() {
+        xbmc.inputKeys('toggle'); return false;
       });
       
       this.each (function() {
@@ -3877,9 +3880,12 @@
   \* ########################### */
   $.fn.defaultFindBox = function(options, params, parentPage) {
     //library: 'video', [open: 'continue', searchAndOr: '', searchFields: 'title', searchOps: 'contains', searchTerms: ''],
+    var inputControls = false;
     //Switch off key binds
     if (awxUI.settings.remoteActive) {
-      xbmc.inputKeys(false);
+      //Restore input keys after searching
+      inputControls = true;
+      xbmc.inputKeys('off');
     };
     
     var settings = {
@@ -4016,26 +4022,16 @@
           mkf.messageLog.appendTextAndHide(messageHandle, mkf.lang.get('Failed! Check your query.', 'Popup message'), 6000, mkf.messageLog.status.error);
         }          
       });
-     /* $(self).find('.findBoxTitle').remove();
-      if (input.val()) {
-        $(self).prepend('<div class="findBoxTitle"><span>' + mkf.lang.get('Search result within this page for', 'Label') + ' : ' + [input.val()] + '</span></div>');
-      }
-      if (settings.searchItems == '.folderLinkWrapper' || settings.searchItems == 'a' ){
-      $searchItems.parent().removeAttr("style");
-      } else {
-      $searchItems.removeAttr("style");
-      }
-      if (settings.searchItems == '.folderLinkWrapper' || settings.searchItems == 'a' ){
-      $searchItems.not(":contains('" + input.val().toLowerCase() + "')").parent().hide();
-      } else {
-      $searchItems.not(":contains('" + input.val().toLowerCase() + "')").hide();
-      }*/
+
       $(window).trigger('resize'); // ugly but best performance: trigger 'resize' because lazy-load-images may be visible now and should be loaded.
     };
 
     input
       .blur(function() {
         $(this).parent().hide();
+        if (inputControls) {
+          xbmc.inputKeys('on');
+        }
       })
       .keydown(function(event) {
         if (event.keyCode == 0x0D) {
@@ -4043,14 +4039,11 @@
         }
         if (event.keyCode == 0x1B || event.keyCode == 0x0D) {
           $(this).parent().hide();
+          if (inputControls) {
+            xbmc.inputKeys('on');
+          }
         }
       })
-      /*.keyup(function() {
-        if (timeout) {
-          clearTimeout(timeout);
-        }
-        timeout = setTimeout(onInputContentChanged, settings.delay);
-      })*/
       .focus(function() {
         this.select();
       })
@@ -4059,74 +4052,4 @@
     return false;
   };
   
-  /* ########################### *\
-   |  FindBox
-  \* ########################### */
-  /*$.fn.defaultFindBox = function(options) {
-    var settings = {
-      id: 'defaultFindBox',
-      searchItems: '.findable',
-      top: 0,
-      left: 0,
-      delay: 500
-    };
-
-    if(options) {
-      $.extend(settings, options);
-    }
-
-    var self = this;
-    //var timeout;
-    
-    var $searchItems = $(self).find(settings.searchItems);
-    var $box = $('#' + settings.id);
-
-    // Always create box
-    var $div = $('<div id="' + settings.id + '" class="findBox"><input type="text" /></div>')
-      .appendTo($('body'))
-      .css({'left': settings.left, 'top': settings.top});
-
-    if ($div.width() + $div.position().left > $(window).width()) {
-      $div.css({'left': settings.left-$div.width()});
-    }
-    var input = $div.find('input');
-
-    function onInputContentChanged() {
-      $(self).find('.findBoxTitle').remove();
-      if (input.val()) {
-        $(self).prepend('<div class="findBoxTitle"><span>' + mkf.lang.get('Search result within this page for', 'Label') + ' : ' + [input.val()] + '</span></div>');
-      }
-      if (settings.searchItems == '.folderLinkWrapper' || settings.searchItems == 'a' ){
-      $searchItems.parent().removeAttr("style");
-      } else {
-      $searchItems.removeAttr("style");
-      }
-      if (settings.searchItems == '.folderLinkWrapper' || settings.searchItems == 'a' ){
-      $searchItems.not(":contains('" + input.val().toLowerCase() + "')").parent().hide();
-      } else {
-      $searchItems.not(":contains('" + input.val().toLowerCase() + "')").hide();
-      }
-      $(window).trigger('resize'); // ugly but best performance: trigger 'resize' because lazy-load-images may be visible now and should be loaded.
-    };
-
-    input
-      .blur(function() {
-        $(this).parent().hide();
-      })
-      .keydown(function(event) {
-        if (event.keyCode == 0x0D) {
-          onInputContentChanged();
-        }
-        if (event.keyCode == 0x1B || event.keyCode == 0x0D) {
-          $(this).parent().hide();
-        }
-      })
-      .focus(function() {
-        this.select();
-      })
-      .focus();
-
-    return false;
-  }; */ 
-  // END defaultFindBox
 })(jQuery);
