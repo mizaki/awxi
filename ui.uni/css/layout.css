@@ -845,7 +845,7 @@ div.linkArtistWrapper {
   position: absolute;
   width: 90%;
 }
-div.addons {
+div.movieinfo div.addons {
   display: none;
 }
 div.addons  div.addon {
