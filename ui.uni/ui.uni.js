@@ -1729,7 +1729,7 @@
       
       
       
-      $('.' + mkf.cookieSettings.get('startPage', 'recentTV') + ' a').click();
+      $('.' + awxUI.settings.startPage + ' a').click();
       
       xbmc.musicPlaylist = $('div.musicPlaylist');
       xbmc.videoPlaylist = $('div.videoPlaylist');

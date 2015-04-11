@@ -206,6 +206,12 @@ var addons = {};
 
         onSuccess: function(response) {
           if (response.addon.enabled && response.addon.version > '1.0.1') {
+            //Set Full Screen to get lyrics [hack as something broke in culrc lyrics?]
+            xbmc.sendCommand(
+              '{ "jsonrpc": "2.0", "method": "GUI.SetFullscreen", "params": { "fullscreen": true }, "id": "setFS" }',
+              null,
+              null
+            );
             xbmc.getInfoLabels({
               labels: ['Window(Home).Property(culrc.lyrics)', 'Window(Home).Property(culrc.source)' , 'Window(Home).Property(culrc.running)'],
               onError: function() {

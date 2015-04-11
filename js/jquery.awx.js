@@ -949,7 +949,8 @@
       var rotateCDart = (awxUI.settings.rotateCDart? awxUI.settings.rotateCDart : 'no');
       var manualPath = mkf.cookieSettings.get('manualPath');
       var preferLogos = (awxUI.settings.preferLogos? 'yes' : 'no');
-
+      var controllerOnPlay = (awxUI.settings.controllerOnPlay? 'yes' : 'no');
+      
       var dialogHandle = mkf.dialog.show(
         {
         content :
@@ -999,7 +1000,8 @@
         '<br /><input type="checkbox" id="lazyload" name="lazyload" ' + (lazyload=='yes'? 'checked="checked"' : '') + '><label for="lazyload">' + mkf.lang.get('Use LazyLoad for Thumbnails', 'Settings option') + '</label>' +
         '<input type="checkbox" id="showTags" name="showTags" ' + (showTags=='yes'? 'checked="checked"' : '') + '><label for="showTags">' + mkf.lang.get('Show codec tags', 'Settings option') + '</label>' +
         '<input type="checkbox" id="rotateCDart" name="rotateCDart" ' + (rotateCDart=='yes'? 'checked="checked"' : '') + '><label for="rotateCDart">' + mkf.lang.get('Rotate CD art', 'Settings option') + '</label><br />' +
-        '<input type="checkbox" id="preferLogos" name="preferLogos" ' + (preferLogos=='yes'? 'checked="checked"' : '') + '><label for="preferLogos">' + mkf.lang.get('Prefer Logos', 'Settings option') + '</label><br />' +
+        '<input type="checkbox" id="preferLogos" name="preferLogos" ' + (preferLogos=='yes'? 'checked="checked"' : '') + '><label for="preferLogos">' + mkf.lang.get('Prefer Logos', 'Settings option') + '</label>' +
+        '<input type="checkbox" id="controllerOnPlay" name="controllerOnPlay" ' + (controllerOnPlay=='yes'? 'checked="checked"' : '') + '><label for="controllerOnPlay">' + mkf.lang.get('Control display when playing', 'Settings option') + '</label><br />' +
         '<label for="timeout">' + mkf.lang.get('Time Out for Ajax-Requests:', 'Settings option') + '</label><input type="text" id="timeout" name="timeout" value="' + timeout + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('seconds', 'Settings label') +
         '</fieldset>' +
         '</form>' +
@@ -1295,6 +1297,8 @@
         awxUI.settings.showTags = document.settingsForm.showTags.checked? true : false;
         awxUI.settings.rotateCDart = document.settingsForm.rotateCDart.checked? true : false;
         awxUI.settings.preferLogos = document.settingsForm.preferLogos.checked? true : false;
+        awxUI.settings.controllerOnPlay = document.settingsForm.controllerOnPlay.checked? true : false;
+        
         if (awxUI.settings.useFanart && !document.settingsForm.usefanart.checked? true : false) {
           //Change in fan art, may need to remove current.
           xbmc.clearBackground();

@@ -52,7 +52,7 @@ var awx = {};
         // --- STEP 2: Load UI-Script
         step2 : function() {
           //Disable cache on json requests
-          $.ajaxSetup({ cache:false });
+          //$.ajaxSetup({ cache:false });
           
           $('#loadingAWXHint').text(mkf.lang.get('Setting up UI...', 'Initial window screen'));
 
@@ -69,6 +69,55 @@ var awx = {};
           //Load setting from local storage
           if(localStorage && localStorage.getItem('AWXi')) {
             awxUI.settings = JSON.parse(localStorage.getItem('AWXi'));
+            //Check for undefined
+            //Views
+            if (typeof awxUI.settings.artistsView === 'undefined') { awxUI.settings.artistsView = 'list'; }
+            if (typeof awxUI.settings.albumsView === 'undefined') {  awxUI.settings.albumsView = 'cover'; }
+            if (typeof awxUI.settings.albumsViewRec === 'undefined') {  awxUI.settings.albumsViewRec = 'cover'; }
+            if (typeof awxUI.settings.filmView === 'undefined') {  awxUI.settings.filmView = 'poster'; }
+            if (typeof awxUI.settings.filmViewRec === 'undefined') {  awxUI.settings.filmViewRec = 'poster'; }
+            if (typeof awxUI.settings.filmViewSets === 'undefined') {  awxUI.settings.filmViewSets = 'poster'; }
+            if (typeof awxUI.settings.TVView === 'undefined') {  awxUI.settings.TVView = 'banner'; }
+            if (typeof awxUI.settings.TVViewRec === 'undefined') {  awxUI.settings.TVViewRec = 'infolist'; }
+            if (typeof awxUI.settings.EpView === 'undefined') {  awxUI.settings.EpView = 'listover'; }
+            if (typeof awxUI.settings.musicVideoView === 'undefined') {  awxUI.settings.musicVideosView = 'cover'; }
+            
+            //Sorting
+            if (typeof awxUI.settings.filmSort === 'undefined') {  awxUI.settings.filmSort = 'label'; }
+            if (typeof awxUI.settings.mdesc === 'undefined') {  awxUI.settings.mdesc = 'ascending'; }
+            if (typeof awxUI.settings.tvSort === 'undefined') {  awxUI.settings.TVSort = 'label'; }
+            if (typeof awxUI.settings.tvdesc === 'undefined') {  awxUI.settings.tvdesc = 'ascending'; }
+            if (typeof awxUI.settings.epSort === 'undefined') {  awxUI.settings.EpSort = 'episode'; }
+            if (typeof awxUI.settings.epdesc === 'undefined') {  awxUI.settings.epdesc = 'ascending'; }
+            if (typeof awxUI.settings.albumSort === 'undefined') {  awxUI.settings.albumSort = 'album'; }
+            if (typeof awxUI.settings.adesc === 'undefined') {  awxUI.settings.adesc = 'ascending'; }
+            if (typeof awxUI.settings.musicVideosSort === 'undefined') {  awxUI.settings.mvSort = 'artist'; }
+            if (typeof awxUI.settings.musicVideosdesc === 'undefined') {  awxUI.settings.mvdesc = 'ascending'; }
+            
+            //Limits
+            if (typeof awxUI.settings.limitMovies === 'undefined') {  awxUI.settings.limitVideo = 25; }
+            if (typeof awxUI.settings.limitTV === 'undefined') {  awxUI.settings.limitTV = 25; }
+            if (typeof awxUI.settings.limitArtists === 'undefined') {  awxUI.settings.limitArtists = 25; }
+            if (typeof awxUI.settings.limitAlbums === 'undefined') {  awxUI.settings.limitAlbums = 25; }
+            if (typeof awxUI.settings.limitSongs === 'undefined') {  awxUI.settings.limitSongs = 25; }
+            if (typeof awxUI.settings.limitMV === 'undefined') {  awxUI.settings.limitMusicVideo = 25; }
+            
+            //General
+            if (typeof awxUI.settings.lazyload === 'undefined') {  awxUI.settings.lazyload = false; }
+            if (typeof awxUI.settings.timeout === 'undefined') {  awxUI.settings.timeout = 20; }
+            if (typeof awxUI.settings.ui === 'undefined') {  awxUI.settings.ui = 'uni'; }
+            if (typeof awxUI.settings.lang === 'undefined') {  awxUI.settings.lang = 'en'; }
+            if (typeof awxUI.settings.watched === 'undefined') {  awxUI.settings.watched = false; }
+            if (typeof awxUI.settings.hideWatchedMark === 'undefined') {  awxUI.settings.hidewatchedmark = false; }
+            if (typeof awxUI.settings.hoverOrClick === 'undefined') {  awxUI.settings.hoverOrClick = 'mouseenter'; }
+            if (typeof awxUI.settings.useFanart === 'undefined') {  awxUI.settings.usefanart = false; }
+            if (typeof awxUI.settings.useXtraFanart === 'undefined') {  awxUI.settings.usextrafanart = false; }
+            if (typeof awxUI.settings.startPage === 'undefined') {  awxUI.settings.startPage = 'recentTV'; }
+            if (typeof awxUI.settings.showTags === 'undefined') {  awxUI.settings.showTags = false; }
+            if (typeof awxUI.settings.rotateCDart === 'undefined') {  awxUI.settings.rotateCDart = false; }
+            if (typeof awxUI.settings.artistsPath === 'undefined') {  awxUI.settings.artistsPath = ''; }
+            if (typeof awxUI.settings.preferLogos === 'undefined') {  awxUI.settings.preferLogos = false; }
+            if (typeof awxUI.settings.controllerOnPlay === 'undefined') {  awxUI.settings.controllerOnPlay = true; }
           } else {
             //Views
             awxUI.settings.artistsView = mkf.cookieSettings.get('artistsView', 'list');
@@ -118,6 +167,7 @@ var awx = {};
             awxUI.settings.artistsPath = mkf.cookieSettings.get('artistsPath');
             awxUI.settings.manualPath = mkf.cookieSettings.get('manualPath');
             awxUI.settings.preferLogos = mkf.cookieSettings.get('preferLogos')=='yes'? true : false;
+            awxUI.settings.controllerOnPlay = mkf.cookieSettings.get('controllerOnPlay', 'yes')=='yes'? true : false;
           }
 
           awxUI.settings.remoteActive = false;

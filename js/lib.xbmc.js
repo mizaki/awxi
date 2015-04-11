@@ -2852,6 +2852,7 @@ var xbmc = {};
           if (typeof xbmc.activePlayerid === 'undefined') { xbmc.activePlayerid = -1; }
           if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
           if (typeof xbmc.playerPartyMode === 'undefined') { xbmc.playerPartyMode = false; }
+          if (typeof xbmc.activePVR === 'undefined') { xbmc.activePVR = false; }
 
           xbmc.sendCommand(
             '{"jsonrpc": "2.0", "method": "Player.GetActivePlayers", "id": 1}',
@@ -2866,6 +2867,20 @@ var xbmc = {};
               } else {
                 xbmc.activePlayer = playerActive[0].type;
                 xbmc.activePlayerid = playerActive[0].playerid;
+                //Show controller
+                if (awxUI.settings.controllerOnPlay && !awxUI.settings.remoteActive) {
+                  if (!awxUI.settings.remoteActive) {
+                    xbmc.inputKeys('on');
+                  } else {
+                    xbmc.inputKeys('off');
+                  };
+                  
+                  $('#displayoverlayleft').show();
+                  $('#displayoverlaytop').show();
+                  $('#displayoverlaybot').show();
+                  $('#content').addClass('controls');
+                  $('#artwork').show();
+                }
               }
             },
             
@@ -3059,7 +3074,12 @@ var xbmc = {};
                 // $('#content').css('background-image', 'url("' +  + '")')
                 
                 //PVR reports no file attrib. Copy title to file
-                if (currentItem.type == 'channel') { currentItem.file = currentItem.title };
+                if (currentItem.type == 'channel') {
+                  currentItem.file = currentItem.title;
+                  xbmc.activePVR = true;
+                } else {
+                  xbmc.activePVR = false;
+                }
                 
                 if ( currentItem.fanart != '' && xbmc.$backgroundFanart != xbmc.getThumbUrl(currentItem.fanart) && useFanart && !awxUI.settings.useXtraFanart) {
                   xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
@@ -3177,14 +3197,10 @@ var xbmc = {};
       }
       
       //Look for lyric time
-      //console.log($('div#lyrics span.time').filter(function() { return $.text([this]) == '#' + xbmc.periodicUpdater.progress }).length)
-      //if (xbmc.activePlayer == 'audio' && xbmc.lyrics && $('div#lyrics span.time:contains(#' + xbmc.periodicUpdater.progress + ')').length > 0) {
       if (xbmc.activePlayer == 'audio' && xbmc.lyrics && $('div#lyrics span.time').filter(function() { return $.text([this]) == '#' + xbmc.periodicUpdater.progress }).length > 0) {
         $('div#lyrics div').removeClass('current');
         $('div#lyrics span.time').filter(function() { return $.text([this]) == '#' + xbmc.periodicUpdater.progress }).parent().addClass('current');
-        //$('div#lyrics span.time:contains(#' + xbmc.periodicUpdater.progress + ')').parent().addClass('current');
-        $.scrollTo($('div#lyricContent .lyricline.current'));
-        //$('div#lyrics .current')[0].scrollIntoView( true );
+        $('div#lyrics').scrollTo($('.lyricline.current'),500,{"offset": -50});
       }
       //Initial time grab and checking for time slip every 10%.
       if (xbmc.periodicUpdater.progressEnd != 0) {
@@ -3209,10 +3225,11 @@ var xbmc = {};
             xbmc.periodicUpdater.progress = curtime +1;
             xbmc.periodicUpdater.progressEnd = curruntime;
             xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
-
-
           }
         );
+        
+        //PVR hack. No notification on programme change, only channel change.
+        //Use time to fire change?
       } else {
       //Internal counting
         if (xbmc.periodicUpdater.progress < xbmc.periodicUpdater.progressEnd ) { xbmc.periodicUpdater.progress++ };
@@ -3321,11 +3338,12 @@ var xbmc = {};
         
         var useFanart = mkf.cookieSettings.get('usefanart', 'no')=='yes'? true : false;
         var showInfoTags = awxUI.settings.showTags;
-        if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
         if (typeof xbmc.activePlayer === 'undefined') { xbmc.activePlayer = 'none'; }
         if (typeof xbmc.activePlayerid === 'undefined') { xbmc.activePlayerid = -1; }
         if (typeof xbmc.inErrorState === 'undefined') { xbmc.inErrorState = 0; }
         if (typeof xbmc.playerPartyMode === 'undefined') { xbmc.playerPartyMode = false; }
+        if (typeof xbmc.activePVR === 'undefined') { xbmc.activePVR = false; }
+        
         //Wait for window to draw - FF mostly.
           setTimeout(function() {
             //Initial status readings, after rely on notifications.
@@ -3343,6 +3361,20 @@ var xbmc = {};
                   
 
                   if (xbmc.activePlayer != 'none') {
+                    //Show controller
+                    if (awxUI.settings.controllerOnPlay && !awxUI.settings.remoteActive) {
+                      if (!awxUI.settings.remoteActive) {
+                        xbmc.inputKeys('on');
+                      } else {
+                        xbmc.inputKeys('off');
+                      };
+                      
+                      $('#displayoverlayleft').show();
+                      $('#displayoverlaytop').show();
+                      $('#displayoverlaybot').show();
+                      $('#content').addClass('controls');
+                      $('#artwork').show();
+                    }
                     xbmc.sendCommand(
                       '{"jsonrpc":"2.0","id":"OPProp","method":"Player.GetProperties","params":{ "playerid":' + xbmc.activePlayerid + ',"properties":["speed", "shuffled", "repeat", "subtitleenabled", "time", "totaltime", "position", "currentaudiostream", "partymode"] } }',
 
@@ -3589,7 +3621,6 @@ var xbmc = {};
         };
         ws.onerror = function (err) {
           console.log(err);
-          //TODO Wait a second then check ws state. If it has stopped try to reopen. Count tries and stop at 5+
           xbmc.inErrorState++;
           mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
           
@@ -3644,8 +3675,26 @@ var xbmc = {};
             
             if (pollTimeRunning === false) { xbmc.pollTimeStart() };
             
+            //Show controller
+            if (awxUI.settings.controllerOnPlay && !awxUI.settings.remoteActive) {
+              if (!awxUI.settings.remoteActive) {
+                xbmc.inputKeys('on');
+              } else {
+                xbmc.inputKeys('off');
+              };
+              
+              $('#displayoverlayleft').show();
+              $('#displayoverlaytop').show();
+              $('#displayoverlaybot').show();
+              $('#content').addClass('controls');
+              $('#artwork').show();
+            }
+            
             //Add detail as getting previous lyrics
-            if (xbmc.lyrics) { setTimeout(function() { addons.culrcLyrics() }, 1000) };
+            if (xbmc.lyrics) { setTimeout(function() { 
+              addons.culrcLyrics();
+              $('div#lyrics').scrollTo('0px',500);
+            }, 1000) };
             //Also activated on item change. Check incase it's slideshow.
             if (xbmc.activePlayer != 'none') {
               var request = '';
@@ -3666,7 +3715,12 @@ var xbmc = {};
                   var currentItem = response.result.item;
                   
                   //PVR reports no file attrib. Copy title to file
-                  if (currentItem.type == 'channel') { currentItem.file = currentItem.title };
+                  if (currentItem.type == 'channel') {
+                    currentItem.file = currentItem.title;
+                    xbmc.activePVR = true;
+                  } else {
+                    xbmc.activePVR = false;
+                  }
                   
                   if ( currentItem.fanart != '' && xbmc.$backgroundFanart != xbmc.getThumbUrl(currentItem.fanart) && useFanart && !awxUI.settings.useXtraFanart) {
                     xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
@@ -3838,6 +3892,21 @@ var xbmc = {};
             xbmc.lyrics = false;
             xbmc.$backgroundFanart = '';
 
+            //Hide controller
+            if (awxUI.settings.controllerOnPlay && awxUI.settings.remoteActive) {
+              if (!awxUI.settings.remoteActive) {
+                xbmc.inputKeys('on');
+              } else {
+                xbmc.inputKeys('off');
+              };
+              
+              $('#displayoverlayleft').hide();
+              $('#displayoverlaytop').hide();
+              $('#displayoverlaybot').hide();
+              $('#content').removeClass('controls');
+              $('#artwork').hide();
+            }
+            
             $('#streamdets .vFormat').removeAttr('class').addClass('vFormat');
             $('#streamdets .aspect').removeAttr('class').addClass('aspect');
             $('#streamdets .channels').removeAttr('class').addClass('channels');
