@@ -2864,6 +2864,7 @@ var xbmc = {};
               if (playerActive == '') {
                 xbmc.activePlayer = 'none';
                 xbmc.activePlayerid = -1;
+                xbmc.activePVR = false;
               } else {
                 xbmc.activePlayer = playerActive[0].type;
                 xbmc.activePlayerid = playerActive[0].playerid;
@@ -3227,9 +3228,81 @@ var xbmc = {};
             xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
           }
         );
-        
+
         //PVR hack. No notification on programme change, only channel change.
-        //Use time to fire change?
+        if (xbmc.activePVR) {
+          var request = '';
+
+          if (xbmc.activePlayer == 'audio') {
+            request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "duration", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 0 }, "id": "OPGetItem"}';
+
+          } else if (xbmc.activePlayer == 'video') {
+            request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "season", "episode", "duration", "showtitle", "tvshowid", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 1 }, "id": "OPGetItem"}';
+          }
+        
+          // Current file changed?
+          xbmc.sendCommand(
+            request,
+
+            function (response) {
+              var currentItem = response.result.item;
+              
+              //PVR reports no file attrib. Copy title to file
+              if (currentItem.type == 'channel') { currentItem.file = currentItem.title };
+              
+              if (xbmc.periodicUpdater.currentlyPlayingFile != currentItem.file) {
+                xbmc.periodicUpdater.currentlyPlayingFile = currentItem.file;
+                $.extend(currentItem, {
+                  xbmcMediaType: xbmc.activePlayer
+                });
+                xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
+
+                //Footer stream details for video
+                if (xbmc.activePlayer == 'video' && showInfoTags) {
+
+                  var streamdetails = {
+                    vFormat: 'SD',
+                    vCodec: 'Unknown',
+                    aCodec: 'Unknown',
+                    channels: 0,
+                    aStreams: 0,
+                    hasSubs: false,
+                    aLang: '',
+                    aspect: 0,
+                    vwidth: 0
+                  };
+                  
+                  if (typeof(currentItem.streamdetails) != 'undefined') {
+                    if (currentItem.streamdetails.video.length != 0) {
+
+                      if (currentItem.streamdetails.subtitle) { streamdetails.hasSubs = true };
+                      if (currentItem.streamdetails.audio.length != 0) {
+                        streamdetails.channels = currentItem.streamdetails.audio[0].channels;
+                        streamdetails.aStreams = currentItem.streamdetails.audio.length;
+                        //$.each(currentItem.streamdetails.audio, function(i, audio) { streamdetails.aLang += audio.language + ' ' } );
+                        //if ( streamdetails.aLang == ' ' ) { streamdetails.aLang = mkf.lang.get('label_not_available') };
+                      };
+                      streamdetails.aspect = xbmc.getAspect(currentItem.streamdetails.video[0].aspect);
+                      //Get video standard
+                      streamdetails.vFormat = xbmc.getvFormat(currentItem.streamdetails.video[0].width);
+                      //Get video codec
+                      streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
+                      //Set audio icon
+                      streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
+                        
+                      $('#streamdets .vFormat').addClass('vFormat' + streamdetails.vFormat);
+                      $('#streamdets .aspect').addClass('aspect' + streamdetails.aspect);
+                      $('#streamdets .channels').addClass('channels' + streamdetails.channels);
+                      $('#streamdets .vCodec').addClass('vCodec' + streamdetails.vCodec);
+                      $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
+                      (streamdetails.hasSubs? $('#streamdets .vSubtitles').css('display', 'block') : $('#streamdets .vSubtitles').css('display', 'none'));
+                    }
+                  }
+                }
+              }
+            }
+          );
+        }
       } else {
       //Internal counting
         if (xbmc.periodicUpdater.progress < xbmc.periodicUpdater.progressEnd ) { xbmc.periodicUpdater.progress++ };
@@ -3484,7 +3557,12 @@ var xbmc = {};
                         var currentItem = response.result.item;
                         
                         //PVR reports no file attrib. Copy title to file
-                        if (currentItem.type == 'channel') { currentItem.file = currentItem.title };
+                        if (currentItem.type == 'channel') {
+                          currentItem.file = currentItem.title;
+                          xbmc.activePVR = true;
+                        } else {
+                          xbmc.activePVR = false;
+                        }
                         
                         xbmc.getExtraArt({path: currentItem.file, type: 'extrafanart', library: currentItem.type, tvid: currentItem.tvshowid}, function(xart) { xbmc.xart = xart } );
                         
@@ -3883,6 +3961,7 @@ var xbmc = {};
           break;
           case 'Player.OnStop':
             clearInterval(pollTimeRunning);
+            xbmc.activePVR = false;
             pollTimeRunning = false;
             xbmc.activePlayerid = -1
             xbmc.activePlayer = 'none';

@@ -730,7 +730,7 @@
       musicPlaylistContextMenu.push({
         'id':'findPlaylistButton', 'icon':'locate', 'title':mkf.lang.get('Locate currently playing', 'Tool tip'), 'shortcut':'Ctrl+2', 'onClick':
           function(){
-            $('.musicPlaylist .playlistItemCur').ScrollTo()
+            $('.musicPlaylist').scrollTo($('.playlistItemCur'));
             return false;
           }
       });
