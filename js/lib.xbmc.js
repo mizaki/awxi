@@ -3258,7 +3258,7 @@ var xbmc = {};
                 xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
 
                 //Footer stream details for video
-                if (xbmc.activePlayer == 'video' && showInfoTags) {
+                if (xbmc.activePlayer == 'video' && awxUI.settings.showTags) {
 
                   var streamdetails = {
                     vFormat: 'SD',
