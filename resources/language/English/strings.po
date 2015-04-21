@@ -362,6 +362,10 @@ msgctxt "Popup message"
 msgid "Failed to start recording"
 msgstr ""
 
+msgctxt "Popup message"
+msgid "Failed to load Kodi settings!"
+msgstr ""
+
 msgid "Please create a Party Mode playlist"
 msgstr ""
 
@@ -841,6 +845,10 @@ msgstr ""
 
 msgctxt "Settings tab"
 msgid "Sorting"
+msgstr ""
+
+msgctxt "Settings tab"
+msgid "Kodi Settings"
 msgstr ""
 
 msgctxt "Footer label"

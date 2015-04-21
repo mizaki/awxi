@@ -3909,6 +3909,396 @@ var uiviews = {};
       return $addonsList;
     },
     
+    /*----Kodi Settings----*/
+    kodiSettings: function(e) {
+      //var dialogHandle = mkf.dialog.show();
+      var dialogContent = $('<div id="kodiSettings"><ul id="kodiSettingsSections"></ul></div>');
+      
+      var loadAddons = function(type, setting) {
+        addons.getAddons({
+          type: type,
+          onSuccess: function(result) {
+            var dialogAddonsHandle = mkf.dialog.show();
+            var dialogAddonsContent = $('<div><div>Available Addons</div></div>');
+            
+            $.each(result.addons, function(idx, addon) {
+              dialogAddonsContent.append('<div class="addonsList"><div class="switchTo"><a href="#" id="' + addon.addonid.replace(/\./g,'-') + '">' + mkf.lang.get('Select', 'Tool tip') + '</a></div><img src="' + xbmc.getThumbUrl(addon.thumbnail)+ '" class="">' +
+                '<div class="movieinfo"><span class="label">Name:</span><span class="value">' + addon.name + '</span></div>' +
+                '<div class="movieinfo"><span class="label">Author:</span><span class="value">' + addon.author + '</span></div>' +
+                '<div class="movieinfo"><span class="label">Version:</span><span class="value">' + addon.version + '</span></div>' +
+                //'<div class="switchTo"><a href="#" id="' + addon.addonid.replace(/\./g,'-') + '">Use</a></div>' +
+                '</div>');
+                
+                dialogAddonsContent.find('a#'+ addon.addonid.replace(/\./g,'-')).button().on('click', function() {
+                  xbmc.setSettingValue({
+                    setting: setting,
+                    value: addon.addonid,
+                    onSuccess: function() {
+                      mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      //As we get a Yes/No box on skin changes, wait a sec then left, select to confirm.
+                      if (type == 'xbmc.gui.skin') {
+                        setTimeout(
+                          xbmc.sendBatch({
+                            batch: ['{"jsonrpc": "2.0", "method": "Input.Left", "id": "skinInputLeft"},{"jsonrpc": "2.0", "method": "Input.Select", "id": "skinInputSelect"}'],
+                            onSuccess: function(result) {
+                              console.log(result);
+                            },
+                            onError: function(result) {
+                              console.log(result);
+                            }
+                          })
+                        , 1500);
+                      }
+                      //Close window
+                      //dialogAddonsContent.parent().find('a.close').click();
+                      mkf.dialog.close(dialogAddonsHandle);
+                    },
+                    onError: function() {
+                      mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                    }
+                  });
+                });
+            });
+            mkf.dialog.setContent(dialogAddonsHandle, dialogAddonsContent);
+            return false;
+          },
+          onError: function() {
+            console.log('failed to get addon list');
+          }        
+        });
+      }
+      
+      var loadSettings = function(ui) {
+        var tab = ui.newPanel;
+        //console.log(ui.newPanel.parent().parent()[0].id);
+        //console.log(ui.newPanel[0].id);
+        xbmc.getSettings({
+          section: ui.newPanel.parent().parent()[0].id,
+          category: ui.newPanel[0].id,
+          onSuccess: function(result) {
+            tab.empty();
+            $.each(result.settings, function(idx, setting) {
+              switch (setting.control.type) {
+                case 'spinner':
+                  if (setting.type == 'string') {
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '"></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    if (typeof setting.options !== 'undefined') {
+                      $.each(setting.options, function(idx, option) {
+                        tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
+                      });
+                    }
+                  } else if (setting.type == 'integer' && typeof setting.options !== 'undefined') {
+                    //Int value but with no logical stepping so select it is.
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '"></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    if (typeof setting.options !== 'undefined') {
+                      $.each(setting.options, function(idx, option) {
+                        tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
+                      });
+                    }
+                  } else {
+                    //Assume number
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    var spinner = tab.find('input#' + setting.id.replace(/\./g,'-')).spinner();
+                    if (setting.maximum) { spinner.spinner('option', 'max', setting.maximum); }
+                    if (setting.minimum) { spinner.spinner('option', 'min', setting.minimum); }
+                    if (setting.step) { spinner.spinner('option', 'step', setting.step); }
+                    
+                    tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                      var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).val();
+                      xbmc.setSettingValue({
+                        setting: setting.id,
+                        value: sendValue,
+                        onSuccess: function() {
+                          mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                        },
+                        onError: function() {
+                          mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                        }
+                      });
+                    });
+                    tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                      xbmc.setSettingValue({
+                        setting: setting.id,
+                        value: setting.default,
+                        onSuccess: function() {
+                          mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                        },
+                        onError: function() {
+                          mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                        }
+                      });
+                    });
+                  }
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                    var sendValue = $(this).parent().find('select#' + setting.id.replace(/\./g,'-')).val();
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: sendValue,
+                      onSuccess: function() {
+                        mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: setting.default,
+                      onSuccess: function() {
+                        mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                break;
+                
+                case 'checkmark':
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingCheck" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="checkbox" value="' + setting.value + '" ' + (setting.value? 'checked' : '') + '><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                    var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: sendValue,
+                      onSuccess: function() {
+                        mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: setting.default,
+                      onSuccess: function() {
+                      mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                break;
+                
+                case 'toggle':
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingCheck" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="checkbox" value="' + setting.value + '" ' + (setting.value? 'checked' : '') + '><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                    var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: sendValue,
+                      onSuccess: function() {
+                      mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: setting.default,
+                      onSuccess: function() {
+                      mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                break;
+                
+                case 'edit':
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingEdit" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="text" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                    var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: sendValue
+                    });
+                    mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                  });
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: setting.default,
+                      onSuccess: function() {
+                      mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                  });
+                break;
+                
+                case 'button':
+                  if (setting.control.format == 'addon') {
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingButton" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="button" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    tab.find('input#' + setting.id.replace(/\./g,'-')).click(function() {
+                      loadAddons(setting.addontype, setting.id);
+                    });
+                  } else {
+                    if (typeof setting.value === 'undefined' || setting.value == '' && setting.control.format == 'action') {
+                      //We can do nothing with these!
+                    } else {
+                      tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingButton" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="button" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                      tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                        var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
+                        xbmc.setSettingValue({
+                          setting: setting.id,
+                          value: sendValue,
+                          onSuccess: function() {
+                            mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                          },
+                          onError: function() {
+                            mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                          }
+                        });
+                      });
+                      tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                        xbmc.setSettingValue({
+                          setting: setting.id,
+                          value: setting.default,
+                          onSuccess: function() {
+                            mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                          },
+                          onError: function() {
+                            mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                          }
+                        });
+                      });
+                    }
+                  }                
+                break;
+                
+                case 'list':
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingList" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" ' + (setting.control.multiselect? 'multiple' : '') + '></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  if (typeof setting.options !== 'undefined') {
+                    $.each(setting.options, function(idx, option) {
+                      tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
+                    });
+                  } else if (typeof setting.definition !== 'undefined') {
+                    $.each(setting.definition.options, function(idx, option) {
+                      tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
+                    });
+                  }
+                  tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                    var sendValue = $(this).parent().find('select#' + setting.id.replace(/\./g,'-')).val();
+                    console.log(typeof sendValue);
+                    //if (sendValue.length > 1 && typeof setting.delimiter !== 'undefined') { sendValue = sendValue.join(setting.delimiter).toString() }
+                    //sendValue = sendValue.join(setting.delimiter).toString();
+                    console.log(typeof sendValue);
+                    xbmc.setSettingValue({
+                      setting: setting.id,
+                      value: sendValue,
+                      onSuccess: function() {
+                        mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                      },
+                      onError: function() {
+                        mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      }
+                    });
+                    tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                      xbmc.setSettingValue({
+                        setting: setting.id,
+                        value: setting.default,
+                        onSuccess: function() {
+                          mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                        },
+                        onError: function() {
+                          mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                        }
+                      });
+                    });
+                  });
+                break;
+                
+                case 'slider':
+                  tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
+                break;
+                
+                case 'range':
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingRange" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="range" value="' + setting.value + '" disabled><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
+                break;
+
+                default:
+                  tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
+              }
+            });
+          },
+          onError: function(result) {
+            mkf.messageLog.show(mkf.lang.get('Failed to load Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+          }
+        });
+      }
+      
+      var loadCategories = function(ui) {
+        //console.log(ui);
+        var tab = ui.newPanel;
+        xbmc.getSettingsCategories({
+        section: ui.newPanel[0].id,
+        onSuccess: function(result) {
+          //console.log(result.categories);
+          tab.empty();
+          tab.append('<div class="' + ui.newPanel[0].id + 'Cat"><ul></ul></div>');
+          
+          var catTab = tab.find('div.' + ui.newPanel[0].id + 'Cat').tabs({
+            activate: function(e, ui) {
+              loadSettings(ui);
+            }
+          });
+          
+          $.each(result.categories, function(idx, category) {
+            tab.find('ul').append('<li><a href="#' + category.id + '">' + category.label + '</a></li>');
+            tab.children().append('<div id="' + category.id + '"></div>');
+            catTab.tabs('refresh');
+          });
+
+          catTab.tabs({active: 0});
+        },
+        onError: function() {
+          mkf.messageLog.show(mkf.lang.get('Failed to load Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+        }
+        });
+      }
+      
+      xbmc.getSettingsSections({
+        onSuccess: function(result) {
+          //var dialogContent = $('<div id="kodiSettings"><ul id="kodiSettingsSections"></ul></div>');
+          var sectionTabs = dialogContent.find('#kodiSettingsSections').parent().tabs({
+            activate: function(e, ui) {
+              loadCategories(ui);
+            }
+          });
+          $.each(result.sections, function(idx, section) {
+            dialogContent.find('ul#kodiSettingsSections').append('<li><a href="#' + section.id + '">' + section.label + '</a></li>');
+            dialogContent.append('<div id="' + section.id + '"></div>');
+            
+            sectionTabs.tabs('refresh');
+            
+          });
+          sectionTabs.tabs({active: 0});
+          //mkf.dialog.setContent(dialogHandle, dialogContent);
+          //return false;
+          
+        },
+        onError: function() {
+          mkf.messageLog.show(mkf.lang.get('Failed to load Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+          //mkf.dialog.close(dialogHandle);
+        }
+      });
+            
+      //return false;
+      return dialogContent;
+    },
+    
     /*-----------*/
     AdvancedSearch: function(search, parentPage) {
       

@@ -615,6 +615,86 @@ var xbmc = {};
       );
     },
     
+    getSettings: function(options) {
+      var settings = {
+        section: '',
+        category: '',
+        level: 'expert',
+        onSuccess: null,
+        onError: null
+      };
+      $.extend(settings, options);
+      
+      xbmc.sendCommand(
+        '{"jsonrpc": "2.0", "method": "Settings.GetSettings", "params": { "filter": { "section": "' + settings.section + '", "category": "' + settings.category + '"}, "level": "' + settings.level + '" }, "id": "libGetSettingsSections"}',
+        function(response) {
+          settings.onSuccess(response.result);
+        },
+        function(response) {
+          settings.onError(response.result);
+        }
+      );
+    },
+    
+    getSettingsSections: function(options) {
+      var settings = {
+        level: 'expert',
+        onSuccess: null,
+        onError: null
+      };
+      $.extend(settings, options);
+      
+      xbmc.sendCommand(
+        '{"jsonrpc": "2.0", "method": "Settings.GetSections", "params": { "level": "' + settings.level + '" }, "id": "libGetSettingsSections"}',
+        function(response) {
+          settings.onSuccess(response.result);
+        },
+        function(response) {
+          settings.onError(reponse.result);
+        }
+      );
+    },
+    
+    getSettingsCategories: function(options) {
+      var settings = {
+        section: '',
+        level: 'expert',
+        onSuccess: null,
+        onError: null
+      };
+      $.extend(settings, options);
+      
+      xbmc.sendCommand(
+        '{"jsonrpc": "2.0", "method": "Settings.GetCategories", "params": { ' + (settings.section != ''? '"section": "' + settings.section + '"' : '') + ', "level": "' + settings.level + '" }, "id": "libGetSettingsCategories"}',
+        function(response) {
+          settings.onSuccess(response.result);
+        },
+        function(response) {
+          settings.onError(response.result);
+        }
+      );
+    },
+    
+    setSettingValue: function(options) {
+      var settings = {
+        setting: '',
+        value: '',
+        onSuccess: null,
+        onError: null
+      };
+      $.extend(settings, options);
+      
+      xbmc.sendCommand(
+        '{"jsonrpc": "2.0", "method": "Settings.SetSettingValue", "params": { "setting": "' + settings.setting + '", "value": ' + (typeof settings.value == 'string'? '"' + settings.value + '"' : settings.value) + ' }, "id": "libSetSettingValue"}',
+        function(response) {
+          settings.onSuccess(response.result);
+        },
+        function(response) {
+          settings.onError(response);
+        }
+      );
+    },
+    
     getProfiles: function(options) {
       var settings = {
         onSuccess: null,
@@ -4118,6 +4198,7 @@ var xbmc = {};
             };
           break;
           case 'Input.OnInputRequested':
+            console.log(JSONRPCnotification.params.data);
             //Add masking for passwords
             uiviews.InputSendText(JSONRPCnotification.params.data, (JSONRPCnotification.params.data.type == 'password'? true : false));
           break;

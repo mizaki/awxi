@@ -951,15 +951,13 @@
       var preferLogos = (awxUI.settings.preferLogos? 'yes' : 'no');
       var controllerOnPlay = (awxUI.settings.controllerOnPlay? 'yes' : 'no');
       
-      var dialogHandle = mkf.dialog.show(
-        {
-        content :
-        '<h1 id="systemControlTitle" class="title">' + mkf.lang.get('Settings', 'Settings tab') + '</h1>' +
+      var dialogContent = $('<h1 id="systemControlTitle" class="title">' + mkf.lang.get('Settings', 'Settings tab') + '</h1>' +
         '<div class="tabs"><div id="tabs">' +
         '<ul><li><a href="#tabs-1">' + mkf.lang.get('General', 'Settings tab') +'</a></li>' +
           '<li><a href="#tabs-2">' + mkf.lang.get('Video Views', 'Settings tab') +'</a></li>' +
           '<li><a href="#tabs-3">' + mkf.lang.get('Music Views', 'Settings tab') +'</a></li>' +
-          '<li><a href="#tabs-4">' + mkf.lang.get('Sorting', 'Settings tab') +'</a></li></ul>' +
+          '<li><a href="#tabs-4">' + mkf.lang.get('Sorting', 'Settings tab') +'</a></li>' +
+          '<li><a href="#tabs-5">' + mkf.lang.get('Kodi Settings', 'Settings tab') +'</a></li></ul>' +
         '<div id="tabs-1">' +
         '<form name="settingsForm">' +
         /*'<fieldset class="ui_settings">' +
@@ -1004,6 +1002,7 @@
         '<input type="checkbox" id="controllerOnPlay" name="controllerOnPlay" ' + (controllerOnPlay=='yes'? 'checked="checked"' : '') + '><label for="controllerOnPlay">' + mkf.lang.get('Control display when playing', 'Settings option') + '</label><br />' +
         '<label for="timeout">' + mkf.lang.get('Time Out for Ajax-Requests:', 'Settings option') + '</label><input type="text" id="timeout" name="timeout" value="' + timeout + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('seconds', 'Settings label') +
         '</fieldset>' +
+        '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
         '</form>' +
         '</div>' +
         
@@ -1078,6 +1077,7 @@
         '<br /><label for="limitMusicVideo">' + mkf.lang.get('Number of items to list:', 'Settings label') + ' </label><input type="text" id="limitMusicVideo" name="limitMusicVideo" value="' + limitMusicVideo + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('for music video based views.', 'Settings label') +
         '</fieldset>' +
         //'<div class="formHint">' + mkf.lang.get('* Not recommended for a large amount of items.') + '</div>' +
+        '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
         '</form>' +
         '</div>' +
         
@@ -1119,6 +1119,7 @@
         '<br /><label for="limitAlbums">' + mkf.lang.get('Number of items to list:', 'Settings label') + ' </label><input type="text" id="limitAlbums" name="limitAlbums" value="' + limitAlbums + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('for album based views.', 'Settings label') +
         '<br /><label for="limitSongs">' + mkf.lang.get('Number of items to list:', 'Settings label') + ' </label><input type="text" id="limitSongs" name="limitSong" value="' + limitSongs + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('for song based views.', 'Settings label') +
         '</fieldset>' +
+        '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
         //'<div class="formHint">' + mkf.lang.get('label_settings_warning') + '</div>' +
         '</form>' +
         '</div>' +
@@ -1176,16 +1177,26 @@
         '</option><option value="episode" ' + (EpSort=='episode'? 'selected' : '') + '>' + mkf.lang.get('Episodes', 'Settings option') +'</option></select>' +
         '<input type="checkbox" id="epdesc" name="epdesc" ' + (epdesc=='descending'? 'checked="checked"' : '') + '><label for="mdesc">' + mkf.lang.get('Descending', 'Settings option') + '</label>' +
         '</fieldset>' +
-        
+        '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
         '</form>' +
         '</div>' +
+        
+        //Kodi settings
+        '<div id="tabs-5">' +
+        //insert from uiviews.kodiSettings()
+          //uiviews.kodiSettings() +
         '</div>' +
-        '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
-        '<div class="formHint">' + mkf.lang.get('(Settings are stored in cookies. You need to enable cookies for this site.)', 'Settings') + '</div>' +
-        '</div>'
-        }
-      );
 
+        /*'</div>' +
+        '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
+        '<div class="formHint">' + mkf.lang.get('(Settings are stored in cookies. You need to enable cookies for this site.)', 'Settings') + '</div>' +*/
+        '</div>');
+        
+      var dialogHandle = mkf.dialog.show();
+      mkf.dialog.setContent(dialogHandle, dialogContent);
+      
+      dialogContent.find('#tabs-5').append(uiviews.kodiSettings());
+      
       //Populate langs
       mkf.lang.getLanguages(function(objls) {
         if (!objls) {
