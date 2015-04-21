@@ -3915,12 +3915,29 @@ var uiviews = {};
       var dialogContent = $('<div id="kodiSettings"><ul id="kodiSettingsSections"></ul></div>');
       
       var loadAddons = function(type, setting) {
+        //Because of a bug pre-Isengard change xbmc.audioencoder type to unknown and parse out unwanted results after.
+        var wasAudioencoder = false;
+        if (type == 'xbmc.audioencoder') { 
+          type = 'unknown';
+          wasAudioencoder = true;
+        }
+        
         addons.getAddons({
           type: type,
           onSuccess: function(result) {
             var dialogAddonsHandle = mkf.dialog.show();
             var dialogAddonsContent = $('<div><div>Available Addons</div></div>');
             
+            //Parse out unwanted types.
+            if (wasAudioencoder) {
+              $.each(result.addons, function(idx, addon) {
+                if(addon.type != 'xbmc.audioencoder') {
+                  result.addons = result.addons.filter(function(el) {
+                    return el.type == 'xbmc.audioencoder';
+                  });
+                }
+              });
+            }
             $.each(result.addons, function(idx, addon) {
               dialogAddonsContent.append('<div class="addonsList"><div class="switchTo"><a href="#" id="' + addon.addonid.replace(/\./g,'-') + '">' + mkf.lang.get('Select', 'Tool tip') + '</a></div><img src="' + xbmc.getThumbUrl(addon.thumbnail)+ '" class="">' +
                 '<div class="movieinfo"><span class="label">Name:</span><span class="value">' + addon.name + '</span></div>' +
