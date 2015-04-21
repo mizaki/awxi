@@ -684,15 +684,28 @@ var xbmc = {};
       };
       $.extend(settings, options);
       
-      xbmc.sendCommand(
-        '{"jsonrpc": "2.0", "method": "Settings.SetSettingValue", "params": { "setting": "' + settings.setting + '", "value": ' + (typeof settings.value == 'string'? '"' + settings.value + '"' : settings.value) + ' }, "id": "libSetSettingValue"}',
-        function(response) {
-          settings.onSuccess(response.result);
-        },
-        function(response) {
-          settings.onError(response);
-        }
-      );
+      if (typeof settings.value == 'object') {
+        xbmc.sendCommand(
+          '{"jsonrpc": "2.0", "method": "Settings.SetSettingValue", "params": { "setting": "' + settings.setting + '", "value": ' + JSON.stringify(settings.value) + ' }, "id": "libSetSettingValue"}',
+          function(response) {
+            settings.onSuccess(response.result);
+          },
+          function(response) {
+            settings.onError(response);
+          }
+        );
+
+      } else {
+        xbmc.sendCommand(
+          '{"jsonrpc": "2.0", "method": "Settings.SetSettingValue", "params": { "setting": "' + settings.setting + '", "value": ' + (typeof settings.value == 'string'? '"' + settings.value + '"' : settings.value) + ' }, "id": "libSetSettingValue"}',
+          function(response) {
+            settings.onSuccess(response.result);
+          },
+          function(response) {
+            settings.onError(response);
+          }
+        );
+      }
     },
     
     getProfiles: function(options) {

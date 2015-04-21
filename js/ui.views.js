@@ -4186,7 +4186,11 @@ var uiviews = {};
                     });
                   } else if (typeof setting.definition !== 'undefined') {
                     $.each(setting.definition.options, function(idx, option) {
-                      tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
+                      if (setting.control.multiselect) {
+                        tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + ($.inArray(option.value, setting.value) !==-1? 'selected' : '') + '>' + option.label + '</option>');
+                      } else {
+                        tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
+                      }
                     });
                   }
                   tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
