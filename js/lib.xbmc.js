@@ -291,6 +291,11 @@ var xbmc = {};
       return (time.hours * 3600) + (time.minutes * 60) + time.seconds; //time in secs
     },
 
+    timeToMilliSec: function(time) {
+      //Expects time in JSON format: time.hours, time.minutes, time.seconds. 
+      return (time.hours * 3600000) + (time.minutes * 60000) + (time.seconds * 1000) + time.milliseconds; //time in millisecs
+    },
+    
     getSeconds: function (time) {
       var seconds = 0;
       var i = 0;
@@ -3285,8 +3290,9 @@ var xbmc = {};
     pollTime: function() {
 
       ++xbmc.periodicUpdater.loopCount;
-      
-      if ((xbmc.periodicUpdater.loopCount % 15) == 0 && xbmc.periodicUpdater.loopCount > 14 && awxUI.settings.useXtraFanart && xbmc.xart.length > 0) {
+
+      //Rotate fan art background
+      if ((xbmc.periodicUpdater.loopCount % 45) == 0 && xbmc.periodicUpdater.loopCount > 14 && awxUI.settings.useXtraFanart && xbmc.xart.length > 0) {
         xbmc.switchFanart();
       }
       
@@ -3296,15 +3302,9 @@ var xbmc = {};
         $('div#lyrics span.time').filter(function() { return $.text([this]) == '#' + xbmc.periodicUpdater.progress }).parent().addClass('current');
         $('div#lyrics').scrollTo($('.lyricline.current'),500,{"offset": -50});
       }
-      //Initial time grab and checking for time slip every 10%.
-      if (xbmc.periodicUpdater.progressEnd != 0) {
-        var proEnd10per = Math.floor((xbmc.periodicUpdater.progressEnd / 100) * 10);
-      } else {
-        //Lost or haven't retrieved progressEnd
-        var proEnd10per = 30;
-      }
-      
-      if ((xbmc.periodicUpdater.progress % proEnd10per) == 0 || xbmc.periodicUpdater.loopCount == 1) {
+
+      //Sync roughly every minute.
+      if ((xbmc.periodicUpdater.loopCount % 240) == 0 || xbmc.periodicUpdater.loopCount == 1) {
         var curtime = 0;
         var curruntime = 0;
         xbmc.sendCommand(
@@ -3312,13 +3312,16 @@ var xbmc = {};
           function (response) {
             var currentPlayer = response.result;
             
-            curtime = xbmc.timeToSec(currentPlayer.time);
-            curruntime = xbmc.timeToSec(currentPlayer.totaltime);
+            curtime = xbmc.timeToMilliSec(currentPlayer.time);
+            curruntime = xbmc.timeToMilliSec(currentPlayer.totaltime);
             
             //console.log('drift: ' + (curtime - xbmc.periodicUpdater.progress));
-            xbmc.periodicUpdater.progress = curtime +1;
+            //console.log('cur: ' + curtime + ' prog: ' + xbmc.periodicUpdater.progress);
+            
+            xbmc.periodicUpdater.progress = curtime; // +1;
             xbmc.periodicUpdater.progressEnd = curruntime;
-            xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
+            xbmc.periodicUpdater.fireProgressChanged({"time": xbmc.periodicUpdater.progress, total: xbmc.periodicUpdater.progressEnd});
+            xbmc.periodicUpdater.oldtime = new Date().getTime() - xbmc.periodicUpdater.startTime;
           }
         );
 
@@ -3398,13 +3401,25 @@ var xbmc = {};
         }
       } else {
       //Internal counting
-        if (xbmc.periodicUpdater.progress < xbmc.periodicUpdater.progressEnd ) { xbmc.periodicUpdater.progress++ };
+        if (xbmc.periodicUpdater.progress < xbmc.periodicUpdater.progressEnd ) {
+          
+          //Due to time counting problems via setTimeout use system date for time checking
+          var time = new Date().getTime() - xbmc.periodicUpdater.startTime;
+          var diff = time - xbmc.periodicUpdater.oldtime;
+          xbmc.periodicUpdater.progress += diff;
+
+          //if (diff > 750) { console.log('diff: ' + diff); }
+
+          xbmc.periodicUpdater.oldtime = new Date().getTime() - xbmc.periodicUpdater.startTime;
+        };
         xbmc.periodicUpdater.fireProgressChanged({"time": xbmc.periodicUpdater.progress, total: xbmc.periodicUpdater.progressEnd});
       }
     },
 
     pollTimeStart: function() {
-      pollTimeRunning = setInterval('xbmc.pollTime()', 1000);
+      xbmc.periodicUpdater.startTime = new Date().getTime();
+      xbmc.periodicUpdater.oldtime = 0;
+      pollTimeRunning = setInterval('xbmc.pollTime()', 250);
     }
     
   });
@@ -3548,8 +3563,8 @@ var xbmc = {};
                         var currentPlayer = response.result;
                         //If playing (not paused) start time counter
                         if (currentPlayer.speed != 0) { xbmc.pollTimeStart() };
-                        var curtime = 0;
-                        var curruntime = 0;
+                        //var curtime = 0;
+                        //var curruntime = 0;
                         var curPlayItemNum = currentPlayer.position;
                         xbmc.playerPartyMode = currentPlayer.partymode;
                         
@@ -3568,14 +3583,15 @@ var xbmc = {};
                           //awxUI.onVideoPlaylistShow();
                         }
                         
-                        curtime = xbmc.timeToSec(currentPlayer.time);
-                        curruntime = xbmc.timeToSec(currentPlayer.totaltime);
+                        /*curtime = xbmc.timeToMilliSec(currentPlayer.time);
+                        curruntime = xbmc.timeToMilliSec(currentPlayer.totaltime);
                         
                         if (xbmc.periodicUpdater.progress != curtime) {
                           xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
                           xbmc.periodicUpdater.progress = curtime;
                           xbmc.periodicUpdater.progressEnd = curruntime;
-                        }
+                          xbmc.periodicUpdater.oldtime = curtime;
+                        }*/
                         if (currentPlayer.speed != 0 && currentPlayer.speed != 1 ) {
                           // not playing
                           if (xbmc.periodicUpdater.playerStatus != 'stopped') {
@@ -3777,7 +3793,7 @@ var xbmc = {};
                 };
               }
             );
-          }, 2000);
+          }, 1000);
           
         var WSmessageHandle = mkf.messageLog.show(mkf.lang.get('Attempting to connect to websocket...', 'Popup message with addition'));
         //mkf.messageLog.show(mkf.lang.get('Attempting to connect to websocket...', 'Popup message'), mkf.messageLog.status.error, 10000);
@@ -4111,7 +4127,7 @@ var xbmc = {};
             pollTimeRunning = false;
           break;
           case 'Player.OnSeek':
-            xbmc.periodicUpdater.progress = xbmc.timeToSec(JSONRPCnotification.params.data.player.time);
+            xbmc.periodicUpdater.progress = xbmc.timeToMilliSec(JSONRPCnotification.params.data.player.time);
             xbmc.periodicUpdater.fireProgressChanged({"time": xbmc.periodicUpdater.progress, total: xbmc.periodicUpdater.progressEnd});
           break;
           case 'Player.OnSpeedChanged':

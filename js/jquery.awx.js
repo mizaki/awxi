@@ -3881,6 +3881,13 @@
       });
       
       xbmc.periodicUpdater.addProgressChangedListener(function(progress) {
+        //console.log(progress);
+        progress.total = Math.floor(progress.total / 1000);
+        progress.time = Math.floor(progress.time / 1000);
+        
+        //console.log(progress.time);
+        //console.log(xbmc.formatTime(progress.total - progress.time));
+        
         timeCurRemain.text(xbmc.formatTime(progress.total - progress.time));
         timeCurRemainTotal.text(xbmc.formatTime(progress.total));
         //durationElement.text(progress.total);
