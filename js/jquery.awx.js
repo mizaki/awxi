@@ -1651,11 +1651,11 @@
             $.each(result.files, function(i, file) {
               if (file.type == 'album') {
                 //add to playlist by albumid, returned as id
-                sendBatch[i] = '{"jsonrpc": "2.0", "method": "Playlist.Add", "params": { "item": { "albumid": ' + file.id + ' }, "playlistid": 0 }, "id": "batchAPL"}';
+                sendBatch.push('{"jsonrpc": "2.0", "method": "Playlist.Add", "params": { "item": { "albumid": ' + file.id + ' }, "playlistid": 0 }, "id": "batchAPL"}');
 
               } else if (file.type == 'song') {
                 //add to playlist by songid, returned as id
-                sendBatch[i] = '{"jsonrpc": "2.0", "method": "Playlist.Add", "params": { "item": { "songid": ' + file.id + ' }, "playlistid": 0 }, "id": "batchAPL"}';
+                sendBatch.push('{"jsonrpc": "2.0", "method": "Playlist.Add", "params": { "item": { "songid": ' + file.id + ' }, "playlistid": 0 }, "id": "batchAPL"}');
 
               } else {
                 //it's not any of those, error
@@ -1677,9 +1677,9 @@
         });
       };
       
-      //should be normal playlist. m3u only? Can use playlist.add directory addAudioFolderToPlaylist
+      //should be normal playlist. m3u only? Can NOT use playlist.add directory as it doesn't honour track order.
       if (!isSmart && e.data.playlistinfo.type == 'unknown' && e.data.playlistinfo.filetype == 'directory') {
-        var messageHandle = mkf.messageLog.show(mkf.lang.get('Adding to playlist...', 'Popup message with addition'));
+        /* messageHandle = mkf.messageLog.show(mkf.lang.get('Adding to playlist...', 'Popup message with addition'));
         xbmc.playlistAdd({
           playlistid: 0,
           item: 'directory',
@@ -1690,6 +1690,44 @@
           },
           onError: function(errorText) {
             mkf.messageLog.appendTextAndHide(messageHandle, errorText, 8000, mkf.messageLog.status.error);
+          }
+        });*/
+        xbmc.getDirectory({
+          directory: e.data.playlistinfo.file,
+          isPlaylist: true,
+          
+          onError: function() {
+            mkf.messageLog.show(mkf.lang.get('Failed!', 'Popup message addition'), mkf.messageLog.status.error, 5000);
+          },
+
+          onSuccess: function(result) {
+            var sendBatch = [];
+            var messageHandle = mkf.messageLog.show(mkf.lang.get('Adding to playlist...', 'Popup message with addition'));
+            
+            $.each(result.files, function(i, file) {
+              if (file.type == 'file') {
+                //add to playlist file
+                sendBatch.push('{"jsonrpc": "2.0", "method": "Playlist.Add", "params": { "item": { "file": ' + file.file + ' }, "playlistid": 0 }, "id": "batchAPL"}');
+
+              } else if (file.type == 'song') {
+                //add to playlist by songid, returned as id
+                sendBatch.push('{"jsonrpc": "2.0", "method": "Playlist.Add", "params": { "item": { "songid": ' + file.id + ' }, "playlistid": 0 }, "id": "batchAPL"}');
+
+              } else {
+                //it's not any of those, error
+                mkf.messageLog.show(mkf.lang.get('Failed!', 'Popup message addition'), mkf.messageLog.status.error, 5000);
+              };
+            });
+            //Send batch command
+            xbmc.sendBatch({
+              batch: sendBatch,
+              onSuccess: function() {
+                mkf.messageLog.appendTextAndHide(messageHandle, mkf.lang.get('OK', 'Popup message addition'), 2000, mkf.messageLog.status.success);
+              },
+              onError: function() {
+                mkf.messageLog.appendTextAndHide(messageHandle, mkf.lang.get('Failed!', 'Popup message addition'), mkf.messageLog.status.error, 5000);
+              }
+            });
           }
         });
       };
