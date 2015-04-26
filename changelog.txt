@@ -1,3 +1,7 @@
+0.7.5
+  - Kodi settings. Change Kodi's settings from the AWXi settings menu (caveats apply).
+  - Better internal timing (no more JS sundial).
+
 0.7.4
   - Switch from LOTS of cookies to one and local storage.
   - Cast.

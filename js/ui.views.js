@@ -3914,7 +3914,7 @@ var uiviews = {};
       //var dialogHandle = mkf.dialog.show();
       var dialogContent = $('<div id="kodiSettings"><ul id="kodiSettingsSections"></ul></div>');
       
-      var loadAddons = function(type, setting) {
+      var loadAddons = function(type, setting, allowEmpty) {
         //Because of a bug pre-Isengard change xbmc.audioencoder type to unknown and parse out unwanted results after.
         var wasAudioencoder = false;
         if (type == 'xbmc.audioencoder') { 
@@ -3938,8 +3938,21 @@ var uiviews = {};
                 }
               });
             }
+            
+            if (allowEmpty) {
+              //Create an empty option
+              result.addons.push({
+                addonid: 'None',
+                author: 'None',
+                name: 'None',
+                thumbnail: '',
+                type: type,
+                version: "0.0"
+              });
+            }
+            
             $.each(result.addons, function(idx, addon) {
-              dialogAddonsContent.append('<div class="addonsList"><div class="switchTo"><a href="#" id="' + addon.addonid.replace(/\./g,'-') + '">' + mkf.lang.get('Select', 'Tool tip') + '</a></div><img src="' + xbmc.getThumbUrl(addon.thumbnail)+ '" class="">' +
+              dialogAddonsContent.append('<div class="addonsList"><div class="switchTo"><a href="#" id="' + addon.addonid.replace(/\./g,'-') + '">' + mkf.lang.get('Select', 'Tool tip') + '</a></div><img src="' + (addon.thumbnail == ''? 'images/emptyAddon.png' : xbmc.getThumbUrl(addon.thumbnail)) + '" class="">' +
                 '<div class="movieinfo"><span class="label">Name:</span><span class="value">' + addon.name + '</span></div>' +
                 '<div class="movieinfo"><span class="label">Author:</span><span class="value">' + addon.author + '</span></div>' +
                 '<div class="movieinfo"><span class="label">Version:</span><span class="value">' + addon.version + '</span></div>' +
@@ -3949,7 +3962,7 @@ var uiviews = {};
                 dialogAddonsContent.find('a#'+ addon.addonid.replace(/\./g,'-')).button().on('click', function() {
                   xbmc.setSettingValue({
                     setting: setting,
-                    value: addon.addonid,
+                    value: (addon.addonid == 'None'? '' : addon.addonid),
                     onSuccess: function() {
                       mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
                       //As we get a Yes/No box on skin changes, wait a sec then left, select to confirm.
@@ -3998,7 +4011,7 @@ var uiviews = {};
               switch (setting.control.type) {
                 case 'spinner':
                   if (setting.type == 'string') {
-                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '"></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '"></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                     if (typeof setting.options !== 'undefined') {
                       $.each(setting.options, function(idx, option) {
                         tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
@@ -4006,7 +4019,7 @@ var uiviews = {};
                     }
                   } else if (setting.type == 'integer' && typeof setting.options !== 'undefined') {
                     //Int value but with no logical stepping so select it is.
-                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '"></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '"></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                     if (typeof setting.options !== 'undefined') {
                       $.each(setting.options, function(idx, option) {
                         tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
@@ -4014,11 +4027,11 @@ var uiviews = {};
                     }
                   } else {
                     //Assume number
-                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingSpin" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                     var spinner = tab.find('input#' + setting.id.replace(/\./g,'-')).spinner();
-                    if (setting.maximum) { spinner.spinner('option', 'max', setting.maximum); }
-                    if (setting.minimum) { spinner.spinner('option', 'min', setting.minimum); }
-                    if (setting.step) { spinner.spinner('option', 'step', setting.step); }
+                    if (typeof setting.maximum !=='undefined') { spinner.spinner('option', 'max', setting.maximum); }
+                    if (typeof setting.minimum !=='undefined') { spinner.spinner('option', 'min', setting.minimum); }
+                    if (typeof setting.step !=='undefined') { spinner.spinner('option', 'step', setting.step); }
                     
                     tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
                       var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).val();
@@ -4074,7 +4087,7 @@ var uiviews = {};
                 break;
                 
                 case 'checkmark':
-                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingCheck" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="checkbox" value="' + setting.value + '" ' + (setting.value? 'checked' : '') + '><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingCheck" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="checkbox" value="' + setting.value + '" ' + (setting.value? 'checked' : '') + '><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                   tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
                     var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
                     xbmc.setSettingValue({
@@ -4103,7 +4116,7 @@ var uiviews = {};
                 break;
                 
                 case 'toggle':
-                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingCheck" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="checkbox" value="' + setting.value + '" ' + (setting.value? 'checked' : '') + '><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingCheck" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="checkbox" value="' + setting.value + '" ' + (setting.value? 'checked' : '') + '><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                   tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
                     var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
                     xbmc.setSettingValue({
@@ -4132,7 +4145,7 @@ var uiviews = {};
                 break;
                 
                 case 'edit':
-                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingEdit" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="text" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingEdit" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="text" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                   tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
                     var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
                     xbmc.setSettingValue({
@@ -4156,18 +4169,23 @@ var uiviews = {};
                 break;
                 
                 case 'button':
-                  if (setting.control.format == 'addon') {
-                    tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingButton" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="button" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
-                    tab.find('input#' + setting.id.replace(/\./g,'-')).click(function() {
-                      loadAddons(setting.addontype, setting.id);
-                    });
-                  } else {
-                    if (typeof setting.value === 'undefined' || setting.value == '' && setting.control.format == 'action') {
-                      //We can do nothing with these!
-                    } else {
-                      tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingButton" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="button" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  switch (setting.control.format) {
+                    case 'addon':
+                      tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingButton" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="button" value="' + setting.value + '"><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                      tab.find('input#' + setting.id.replace(/\./g,'-')).click(function() {
+                        loadAddons(setting.addontype, setting.id, setting.allowempty);
+                      });
+                    break;
+                    
+                    case 'path':
+                      tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingPath" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="text" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+
                       tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
-                        var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
+                        var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).val();
+                        console.log(typeof sendValue);
+                        //if (sendValue.length > 1 && typeof setting.delimiter !== 'undefined') { sendValue = sendValue.join(setting.delimiter).toString() }
+                        //sendValue = sendValue.join(setting.delimiter).toString();
+                        console.log(typeof sendValue);
                         xbmc.setSettingValue({
                           setting: setting.id,
                           value: sendValue,
@@ -4178,25 +4196,59 @@ var uiviews = {};
                             mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
                           }
                         });
-                      });
-                      tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
-                        xbmc.setSettingValue({
-                          setting: setting.id,
-                          value: setting.default,
-                          onSuccess: function() {
-                            mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
-                          },
-                          onError: function() {
-                            mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
-                          }
+                        tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                          console.log('default');
+                          xbmc.setSettingValue({
+                            setting: setting.id,
+                            value: setting.default,
+                            onSuccess: function() {
+                              mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                            },
+                            onError: function() {
+                              mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                            }
+                          });
                         });
                       });
-                    }
+                    break;
+                    
+                    default:
+                      if (typeof setting.value === 'undefined' || setting.value == '' && setting.control.format == 'action') {
+                        //We can do nothing with these!
+                      } else {
+                        tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingButton" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="button" value="' + setting.value + '"><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                        tab.find('button#' + setting.id.replace(/\./g,'-') + '-save').on('click', function() {
+                          var sendValue = $(this).parent().find('input#' + setting.id.replace(/\./g,'-')).is(':checked');
+                          xbmc.setSettingValue({
+                            setting: setting.id,
+                            value: sendValue,
+                            onSuccess: function() {
+                              mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                            },
+                            onError: function() {
+                              mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                            }
+                          });
+                        });
+                        tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                          xbmc.setSettingValue({
+                            setting: setting.id,
+                            value: setting.default,
+                            onSuccess: function() {
+                              mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                            },
+                            onError: function() {
+                              mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                            }
+                          });
+                        });
+                      }
+                    break;
                   }                
                 break;
                 
                 case 'list':
-                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingList" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" ' + (setting.control.multiselect? 'multiple' : '') + '></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><select class="KsettingList" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" ' + (setting.control.multiselect? 'multiple' : '') + '></select><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default">Default</button></div>');
                   if (typeof setting.options !== 'undefined') {
                     $.each(setting.options, function(idx, option) {
                       tab.find('select#' + setting.id.replace(/\./g,'-')).append('<option value="' + option.value + '"' + (option.value == setting.value? 'selected' : '') + '>' + option.label + '</option>');
@@ -4242,15 +4294,15 @@ var uiviews = {};
                 break;
                 
                 case 'slider':
-                  tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
+                  tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
                 break;
                 
                 case 'range':
-                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingRange" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="range" value="' + setting.value + '" disabled><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
+                  tab.append('<div class="kodiSetting"><label for="' + setting.id.replace(/\./g,'-') + '">' + setting.label + ':</label><input class="KsettingRange" id="' + setting.id.replace(/\./g,'-') + '" name="' + setting.id.replace(/\./g,'-') + '" type="range" value="' + setting.value + '" disabled><button id="' + setting.id.replace(/\./g,'-') + '-save">Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
                 break;
 
                 default:
-                  tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
+                  tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
               }
             });
           },

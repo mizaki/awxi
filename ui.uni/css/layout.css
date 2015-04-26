@@ -912,6 +912,9 @@ div.addonsList div.switchTo {
 #kodiSettings .KsettingEdit {
   width: 200px;
 }
+#kodiSettings .KsettingPath {
+  width: 200px;
+}
 #kodiSettings .KsettingRange {
 
 }
