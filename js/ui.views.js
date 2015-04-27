@@ -4185,7 +4185,6 @@ var uiviews = {};
                         console.log(typeof sendValue);
                         //if (sendValue.length > 1 && typeof setting.delimiter !== 'undefined') { sendValue = sendValue.join(setting.delimiter).toString() }
                         //sendValue = sendValue.join(setting.delimiter).toString();
-                        console.log(typeof sendValue);
                         xbmc.setSettingValue({
                           setting: setting.id,
                           value: sendValue,
@@ -4196,20 +4195,20 @@ var uiviews = {};
                             mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
                           }
                         });
-                        tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
-                          console.log('default');
-                          xbmc.setSettingValue({
-                            setting: setting.id,
-                            value: setting.default,
-                            onSuccess: function() {
-                              mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
-                            },
-                            onError: function() {
-                              mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
-                            }
-                          });
+                      });
+                      tab.find('button#' + setting.id.replace(/\./g,'-') + '-default').on('click', function() {
+                        xbmc.setSettingValue({
+                          setting: setting.id,
+                          value: setting.default,
+                          onSuccess: function() {
+                            mkf.messageLog.show(mkf.lang.get('Saved Kodi setting', 'Popup message'), mkf.messageLog.status.success, 3000);
+                          },
+                          onError: function() {
+                            mkf.messageLog.show(mkf.lang.get('Failed to save Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
+                          }
                         });
                       });
+                      
                     break;
                     
                     default:
