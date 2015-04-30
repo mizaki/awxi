@@ -304,6 +304,23 @@ ul.systemMenu > li.mouseover > a .exit, ul.systemMenu > li.activeMenuItem > a .e
   height: 24px;
   width: 24px;
 }
+div#statusInputkey {
+  float: left;
+}
+#statusInputkey a.button {
+  background: url("../images/input32.png") no-repeat scroll 0 0 transparent;
+  float: left;
+  height: 32px;
+  width: 32px;
+}
+#statusInputkey a.inputcontrols {
+  background-position: -320px 0;
+  margin-right: 0;
+  margin-top: 10px;
+}
+#statusInputkey a.inputcontrols.active {
+  background-position: -352px 0;
+}
 #footer #controller {
   background-image: url("../images/buttons.png");
   background-position: -528px 0;
@@ -2965,6 +2982,16 @@ div#controlsInput32 {
   z-index: 5;
 }
 #fullscreen #now {
+  background-color: rgba(0,0,0,0.8);
+  padding: 10px 0;
+  font-size: 2em;
+  position: absolute;
+  width: 100%;
+  bottom: 10px;
+  z-index: 5;
+}
+#fullscreen #nowTime {
+  display: none;
   background-color: rgba(0,0,0,0.8);
   padding: 10px 0;
   font-size: 2em;

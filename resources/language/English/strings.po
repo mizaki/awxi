@@ -187,6 +187,14 @@ msgid "Failed to retrieve information!"
 msgstr ""
 
 msgctxt "Popup message"
+msgid "Failed to connect to websocket, retrying..."
+msgstr ""
+
+msgctxt "Popup message"
+msgid "Failed to connect to websocket, switching to polling..."
+msgstr ""
+
+msgctxt "Popup message"
 msgid "Failed to send command!"
 msgstr ""
 
@@ -257,6 +265,10 @@ msgstr ""
 
 msgctxt "Popup message"
 msgid "Failed to remove playlist item... "
+msgstr ""
+
+msgctxt "Popup message"
+msgid "Automatic fullscreen mode cancelled"
 msgstr ""
 
 msgctxt "Popup message"
@@ -744,11 +756,51 @@ msgid "Start Page"
 msgstr ""
 
 msgctxt "Settings label"
+msgid "Input keys"
+msgstr ""
+
+msgctxt "Settings label"
+msgid "Action on play"
+msgstr ""
+
+msgctxt "Settings label"
 msgid "Language"
 msgstr ""
 
 msgctxt "Settings label"
 msgid "Profiles"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Always inactive"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Active when playing"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Always active"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Show player controls"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Always show player controls"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Do nothing"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Fullscreen mode"
+msgstr ""
+
+msgctxt "Settings option"
+msgid "Fullscreen mode with lyrics"
 msgstr ""
 
 msgctxt "Settings option"

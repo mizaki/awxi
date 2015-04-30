@@ -1,6 +1,10 @@
 0.7.5
   - Kodi settings. Change Kodi's settings from the AWXi settings menu (caveats apply).
   - Better internal timing (no more JS sundial).
+  - Fixed switching to polling when websocket fails 5 times.
+  - Some polling improvements.
+  - Options for showing controller/fullscreen when playing (or not).
+  - Options for input keys (all the time, on play, never).
 
 0.7.4
   - Switch from LOTS of cookies to one and local storage.

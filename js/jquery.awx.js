@@ -906,6 +906,9 @@
 
     var $settingsButton = $('<a href="" class="settings"></a>');
     $settingsButton.click(function() {
+      //For switching off key binds
+      inputControls = false;
+      
       var lazyload = (awxUI.settings.lazyload? awxUI.settings.lazyload : 'no');
       var timeout = (awxUI.settings.timeout? awxUI.settings.timeout : 20);
       var limitVideo = (awxUI.settings.limitMovies? awxUI.settings.limitMovies : 25);
@@ -945,11 +948,13 @@
       var epdesc = (awxUI.settings.epdesc == 'descending'? 'descending' : 'ascending');
       var adesc = (awxUI.settings.adesc == 'descending'? 'descending' : 'ascending');
       var startPage = (awxUI.settings.startPage? awxUI.settings.startPage : 'recentTV');
-      var showTags = (awxUI.settings.showTags? awxUI.settings.showTags : 'yes');
+      var showTags = (awxUI.settings.showTags? 'yes' : 'no');
       var rotateCDart = (awxUI.settings.rotateCDart? awxUI.settings.rotateCDart : 'no');
       var manualPath = mkf.cookieSettings.get('manualPath');
       var preferLogos = (awxUI.settings.preferLogos? 'yes' : 'no');
       var controllerOnPlay = (awxUI.settings.controllerOnPlay? 'yes' : 'no');
+      var inputKey = (awxUI.settings.inputKey? awxUI.settings.inputKey : 0);
+      var actionOnPlay = (awxUI.settings.actionOnPlay? awxUI.settings.actionOnPlay : 0);
       
       var dialogContent = $('<h1 id="systemControlTitle" class="title">' + mkf.lang.get('Settings', 'Settings tab') + '</h1>' +
         '<div class="tabs"><div id="tabs">' +
@@ -984,6 +989,27 @@
         '<option value="musicPlaylist"' + (startPage=='musicPlaylist'? 'selected' : '') + '>' + mkf.lang.get('Music Playlists', 'Settings option') + '</option>' +
         '</select>' +
         '</fieldset>' +
+        
+        '<fieldset class="ui_views">' +
+        '<legend>' + mkf.lang.get('Input keys', 'Settings label') + '</legend>' +
+        '<select id="inputKey" name="inputKey">' +
+        '<option value=0 ' + (inputKey==0? 'selected' : '') + '>' + mkf.lang.get('Always inactive', 'Settings option') + '</option>' +
+        '<option value=1 ' + (inputKey==1? 'selected' : '') + '>' + mkf.lang.get('Active when playing', 'Settings option') + '</option>' +
+        '<option value=2 ' + (inputKey==2? 'selected' : '') + '>' + mkf.lang.get('Always active', 'Settings option') + '</option>' +
+        '</select>' +
+        '</fieldset>' +
+        
+        '<fieldset class="ui_views">' +
+        '<legend>' + mkf.lang.get('Action on play', 'Settings label') + '</legend>' +
+        '<select id="actionOnPlay" name="actionOnPlay">' +
+        '<option value=0 ' + (actionOnPlay==0? 'selected' : '') + '>' + mkf.lang.get('Show player controls', 'Settings option') + '</option>' +
+        '<option value=1 ' + (actionOnPlay==1? 'selected' : '') + '>' + mkf.lang.get('Do nothing', 'Settings option') + '</option>' +
+        '<option value=2 ' + (actionOnPlay==2? 'selected' : '') + '>' + mkf.lang.get('Fullscreen mode', 'Settings option') + '</option>' +
+        '<option value=3 ' + (actionOnPlay==3? 'selected' : '') + '>' + mkf.lang.get('Fullscreen mode with lyrics', 'Settings option') + '</option>' +
+        '<option value=4 ' + (actionOnPlay==4? 'selected' : '') + '>' + mkf.lang.get('Always show player controls', 'Settings option') + '</option>' +
+        '</select>' +
+        
+        '</fieldset>' +
         /*'<fieldset class="ui_views">' +
         '<legend>' + mkf.lang.get('Manual File Directory', 'Settings label') + '</legend>' +
         '<input type="text" name="manual_path" id="manual_path" style="width: 98%">' +
@@ -999,8 +1025,8 @@
         '<input type="checkbox" id="showTags" name="showTags" ' + (showTags=='yes'? 'checked="checked"' : '') + '><label for="showTags">' + mkf.lang.get('Show codec tags', 'Settings option') + '</label>' +
         '<input type="checkbox" id="rotateCDart" name="rotateCDart" ' + (rotateCDart=='yes'? 'checked="checked"' : '') + '><label for="rotateCDart">' + mkf.lang.get('Rotate CD art', 'Settings option') + '</label><br />' +
         '<input type="checkbox" id="preferLogos" name="preferLogos" ' + (preferLogos=='yes'? 'checked="checked"' : '') + '><label for="preferLogos">' + mkf.lang.get('Prefer Logos', 'Settings option') + '</label>' +
-        '<input type="checkbox" id="controllerOnPlay" name="controllerOnPlay" ' + (controllerOnPlay=='yes'? 'checked="checked"' : '') + '><label for="controllerOnPlay">' + mkf.lang.get('Control display when playing', 'Settings option') + '</label><br />' +
-        '<label for="timeout">' + mkf.lang.get('Time Out for Ajax-Requests:', 'Settings option') + '</label><input type="text" id="timeout" name="timeout" value="' + timeout + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('seconds', 'Settings label') +
+        //'<input type="checkbox" id="controllerOnPlay" name="controllerOnPlay" ' + (controllerOnPlay=='yes'? 'checked="checked"' : '') + '><label for="controllerOnPlay">' + mkf.lang.get('Control display when playing', 'Settings option') + '</label><br />' +
+        '<br /><label for="timeout">' + mkf.lang.get('Time Out for Ajax-Requests:', 'Settings option') + '</label><input type="text" id="timeout" name="timeout" value="' + timeout + '" maxlength="3" style="width: 30px; margin-top: 10px;"> ' + mkf.lang.get('seconds', 'Settings label') +
         '</fieldset>' +
         '<a href="" class="formButton save">' + mkf.lang.get('Save', 'Settings label') + '</a>' + 
         '</form>' +
@@ -1217,6 +1243,16 @@
         };
       });
       
+      dialogContent.find('input[type=text]').blur(function() {
+        if (inputControls) {
+          xbmc.inputKeys('on');
+        }
+      }).focus(function() {
+        if (awxUI.settings.inputKeysActive) {
+        inputControls = true;
+        xbmc.inputKeys('off');
+      };
+      });
       $('#artists').change(function() {
         $('#artists_path').css('display', ($(this).val() == 'logo' || $(this).val() == 'logosingle' || $(this).val() == 'banner') ? 'block' : 'none');
       });
@@ -1308,7 +1344,9 @@
         awxUI.settings.showTags = document.settingsForm.showTags.checked? true : false;
         awxUI.settings.rotateCDart = document.settingsForm.rotateCDart.checked? true : false;
         awxUI.settings.preferLogos = document.settingsForm.preferLogos.checked? true : false;
-        awxUI.settings.controllerOnPlay = document.settingsForm.controllerOnPlay.checked? true : false;
+        //awxUI.settings.controllerOnPlay = document.settingsForm.controllerOnPlay.checked? true : false;
+        awxUI.settings.inputKey = document.settingsForm.inputKey.value;
+        awxUI.settings.actionOnPlay = document.settingsForm.actionOnPlay.value;
         
         if (awxUI.settings.useFanart && !document.settingsForm.usefanart.checked? true : false) {
           //Change in fan art, may need to remove current.
@@ -1341,6 +1379,7 @@
         }
         /*if (oldui != ui) alert(mkf.lang.get('settings_need_to_reload_awx'));*/
         mkf.dialog.close(dialogHandle);
+
 
         return false;
       });
@@ -3942,7 +3981,7 @@
     //library: 'video', [open: 'continue', searchAndOr: '', searchFields: 'title', searchOps: 'contains', searchTerms: ''],
     var inputControls = false;
     //Switch off key binds
-    if (awxUI.settings.remoteActive) {
+    if (awxUI.settings.inputKeysActive) {
       //Restore input keys after searching
       inputControls = true;
       xbmc.inputKeys('off');

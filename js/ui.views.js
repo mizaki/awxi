@@ -4304,11 +4304,22 @@ var uiviews = {};
                   tab.append('<div class="kodiSetting">' + setting.label + ': ' + setting.value + '<button id="' + setting.id.replace(/\./g,'-') + '-save" disabled>Save</button><button title="' + setting.default + '" id="' + setting.id.replace(/\./g,'-') + '-default" disabled>Default</button></div>');
               }
             });
+            tab.find('input[type=text]').blur(function() {
+              if (inputControls) {
+                xbmc.inputKeys('on');
+              }
+            }).focus(function() {
+              if (awxUI.settings.remoteActive && awxUI.settings.inputKey > 0) {
+                inputControls = true;
+                xbmc.inputKeys('off');
+              }
+            });
           },
           onError: function(result) {
             mkf.messageLog.show(mkf.lang.get('Failed to load Kodi settings!', 'Popup message'), mkf.messageLog.status.error, 5000);
           }
         });
+        
       }
       
       var loadCategories = function(ui) {
@@ -4839,6 +4850,13 @@ var uiviews = {};
     },
     
     InputSendText: function(data, password) {
+      var inputControls = false;
+      //Switch off key binds
+      if (awxUI.settings.remoteActive && awxUI.settings.inputKey > 0) {
+        //Restore input keys after searching
+        inputControls = true;
+        xbmc.inputKeys('off');
+      };
       var dialogHandle = mkf.dialog.show({classname: 'inputSendText'});
       var dialogContent = $('<div><h1>' + data.title + '</h1><form name="sendtext" id="sendTextForm">' +
         '<input type="' + (password? 'password' : 'text') + '" size=90 id="sendText" /><input type="submit" style="position: absolute; left: -9999px; width: 1px; height: 1px;" /></form></div>');
@@ -4848,6 +4866,9 @@ var uiviews = {};
           text: $('input').val(),
           onSuccess: function() {
             $('div.inputSendText .close').click();
+            if (inputControls) {
+              xbmc.inputKeys('on');
+            }
           },
           onError: function(errorText) {
             mkf.messageLog.show(mkf.lang.get('Failed to send input!', 'Popup message'), 5000, mkf.messageLog.status.error);
