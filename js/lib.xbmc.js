@@ -2940,9 +2940,8 @@ var xbmc = {};
         }
         if (typeof xbmc.addons === 'undefined') {
           xbmc.addons = [];
+          addons.regAddons();
         }
-        
-        addons.regAddons();
         
         var useFanart = awxUI.settings.useFanart;
         var showInfoTags = awxUI.settings.showTags;
@@ -3344,11 +3343,15 @@ var xbmc = {};
       $('div#playing div#nowTime span#nowspan .nowPlayed').text(xbmc.formatTime(Math.floor(xbmc.periodicUpdater.progress / 1000)));
       $('div#playing div#nowTime span#nowspan .nowRemaining').text(xbmc.formatTime(Math.floor(xbmc.periodicUpdater.progressEnd / 1000)));
       
+      //Rotate media info and time
+      if ((xbmc.periodicUpdater.loopCount % 45) == 0) {
+        $('div#playing div#now').slideToggle(800);
+        $('div#playing div#nowTime').slideToggle(800);
+      }
+      
       //Rotate fan art background
       if ((xbmc.periodicUpdater.loopCount % 45) == 0 && xbmc.periodicUpdater.loopCount > 14 && awxUI.settings.useXtraFanart && xbmc.xart.length > 0) {
         xbmc.switchFanart();
-        $('div#playing div#now').toggle(800);
-        $('div#playing div#nowTime').toggle(800);
       }
       
       //Look for lyric time
@@ -4272,27 +4275,18 @@ var xbmc = {};
           }
         };
         ws.onclose = function (e) {
-          xbmc.inErrorState++;
-          setTimeout(function() {
-            mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
-            
+          console.log(e);
+          if (e.code == 1006) {
+            //Abnormal close (most likely websockets are unavailble).
             //Check to see if XBMC /is/ running
             xbmc.sendCommand(
               '{"jsonrpc": "2.0", "method": "JSONRPC.Ping",  "id": "WSClosePing"}',
-
               function (response) {
                 if (response.result == 'pong') {
-                  //XBMC is responding. Relaunch websocket
-                  if (xbmc.inErrorState < 4) {
-                    console.log('ws.close retrying... ' + xbmc.inErrorState);
-                    mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, retrying...', 'Popup message'), mkf.messageLog.status.error, 5000);
-                    xbmc.wsListener();
-                  } else {
-                    //Cannot open websocket, switch to polling
-                    console.log('Failed to open websocket after ' + xbmc.inErrorState + ' attempts, switching to polling');
-                    mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 8000);
-                    setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
-                  }
+                  //XBMC is responding. Switch to polling.
+                  console.log('Failed to open websocket after ' + xbmc.inErrorState + ' attempts, switching to polling');
+                  mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 8000);
+                  setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
                 } else {
                   $('body').empty();
                   mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
@@ -4300,7 +4294,37 @@ var xbmc = {};
                 }
               }
             );
-          }, 2000);
+          } else {
+            xbmc.inErrorState++;
+            setTimeout(function() {
+              mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
+              
+              //Check to see if XBMC /is/ running
+              xbmc.sendCommand(
+                '{"jsonrpc": "2.0", "method": "JSONRPC.Ping",  "id": "WSClosePing"}',
+
+                function (response) {
+                  if (response.result == 'pong') {
+                    //XBMC is responding. Relaunch websocket
+                    if (xbmc.inErrorState < 4) {
+                      console.log('ws.close retrying... ' + xbmc.inErrorState);
+                      mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, retrying...', 'Popup message'), mkf.messageLog.status.error, 5000);
+                      xbmc.wsListener();
+                    } else {
+                      //Cannot open websocket, switch to polling
+                      console.log('Failed to open websocket after ' + xbmc.inErrorState + ' attempts, switching to polling');
+                      mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 8000);
+                      setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
+                    }
+                  } else {
+                    $('body').empty();
+                    mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
+                    xbmc.setHasQuit();
+                  }
+                }
+              );
+            }, 2000);
+          }
         };
 
     }
