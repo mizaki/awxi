@@ -1563,7 +1563,7 @@
                 '<div id="lyricContent"><div id="lyricInfo"></div><div id="lyrics"></div></div>' +
                 '<div id="playing" style="display: none">' +
                   '<div id="now"><span id="nowspan"><span class="label" /><span class="seperator"></span><span class="nowArtist artist" /><span class="nowTitle" /></span></div>' +
-                  '<div id="nowTime"><span id="nowspan"><span class="nowPlayed" /><span class="seperator">/</span><span class="nowRemaining" /></span></div>' +
+                  '<div id="nowTime"><span id="nowspan"><span class="timePlayed" /><span class="seperator">/</span><span class="timeTotal" /></span></div>' +
                   '<div id="FSartwork" ><a href="" class="artclose"></a><img class="discThumb" src="images/blank_cdart.png" style="display: none; width: 194px; height: 194px; position: absolute; z-index: -1;"><img class="artThumb" src="images/empty_poster_overlay.png"></div>' +
                 '</div>' +
               '</div>' +
@@ -1594,7 +1594,7 @@
                 '<div id="statPlayerContainer"><div id="streamdets"><div class="vFormat" /><div class="aspect" /><div class="vCodec" /><div class="aCodec" /><div class="channels" /><div class="vSubtitles" style="display: none" /></div>' +
                 '<div id="statusInputkey"><a class="button inputcontrols" href="" title="Control Keys"></a></div>' +
                 '<div id="statusPlayer"><div id="statusPlayerRow"><div id="paused"></div><div id="shuffled"></div></div><div id="statusPlayerRow"><div id="repeating"></div><div id="muted"></div></div></div>' +
-                '<div id="remainPlayer"><div id="remaining">' + mkf.lang.get('Remaining:', 'Footer label') + ' <span class="timeRemain">00:00</span></div><div id="plTotal">' + mkf.lang.get('Total:', 'Footer label') + ' <span class="timeRemainTotal">00:00</span></div></div>' +
+                '<div id="remainPlayer"><div id="remaining">' + mkf.lang.get('Remaining:', 'Footer label') + ' <span class="timeRemain">00:00</span></div><div id="plTotal">' + mkf.lang.get('Total:', 'Footer label') + ' <span class="timeTotal">00:00</span></div></div>' +
               //'<div id="statPlayerContainer"><div id="statusPlayer"><div id="statusPlayerRow"><div id="paused"></div><div id="shuffled"></div></div><div id="statusPlayerRow"><div id="repeating"></div><div id="muted"></div></div></div><div id="remainPlayer"><div id="remaining">Remaing:</div><div id="plTotal">Playlist Total:</div></div>' +
                 '<div id="controller"></div></div>' +
               '</div>' +
