@@ -2615,6 +2615,20 @@
     
   }; // END PVRchanViewer
   
+  
+  /* ########################### *\
+   |  Show PVR EPG grid
+   |
+   |  @param pvrchanResult
+  \* ########################### */
+  $.fn.defaultEPGgridViewer = function(pvrchanResult, parentPage) {
+
+    if (!pvrchanResult.limits.total > 0) { return };
+    
+    uiviews.PVRepgGrid(pvrchanResult, parentPage).appendTo($(this));
+    
+  }; // END PVRchanViewer
+  
   /* ########################### *\
    |  Video Scan
    |

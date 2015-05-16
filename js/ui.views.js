@@ -1091,6 +1091,57 @@ var uiviews = {};
       return false;
     },
     
+        /*--------*/
+    PVRepgChannels: function(e) {
+      // open new page to show epg channels
+      var $pvrepgChanContent = $('<div class="pageContentWrapper"></div>');
+      var pvrepgChanPage = mkf.pages.createTempPage(e.data.objParentPage, {
+        title: 'EPG',
+        content: $pvrepgChanContent
+      });
+      var fillPage = function() {
+        $pvrepgChanContent.addClass('loading');
+        xbmc.pvrGetChannels({
+          channelgroupid: e.data.idChannelGroup,
+
+          onError: function() {
+            //mkf.messageLog.show(mkf.lang.get('message_failed_pvr_genre'), mkf.messageLog.status.error, 5000);
+            $pvrepgChanContent.removeClass('loading');
+          },
+
+          onSuccess: function(result) {
+            $pvrepgChanContent.defaultEPGgridViewer(result, pvrepgChanPage);
+            $pvrepgChanContent.removeClass('loading');
+          }
+        });
+      }
+      pvrepgChanPage.setContextMenu(
+        [
+          {
+            'icon':'close', 'title':mkf.lang.get('Close', 'Tool tip'), 'shortcut':'Ctrl+1', 'onClick':
+            function() {
+              mkf.pages.closeTempPage(pvrepgChanPage);
+              return false;
+            }
+          },
+          {
+            'icon':'refresh', 'title':mkf.lang.get('Refresh', 'Tool tip'), 'onClick':
+              function(){
+                $pvrepgChanContent.empty();
+                fillPage();
+                return false;
+              }
+          }
+        ]
+      );
+      mkf.pages.showTempPage(pvrepgChanPage);
+
+      // pvr tv Chan
+      fillPage();
+
+      return false;
+    },
+    
 /*-----------------*/
 /* TV UI functions */
 /*-----------------*/
@@ -3170,9 +3221,10 @@ var uiviews = {};
       var $pvrlist = $('<ul class="fileList"></ul>');
 
         $.each(pvrchans.channelgroups, function(i, changrp)  {          
-          var $changrp = $('<li' + (i%2==0? ' class="even"': '') + '><div class="linkWrapper"> <a href="" class="pvrchan' + i +
-          '">' + changrp.label + '</a></div></li>').appendTo($pvrlist);
+          var $changrp = $('<li' + (i%2==0? ' class="even"': '') + '><div class="linkWrapper"><a href="" class="pvrchan' + i +
+          '"><button class="epg"><span class="epg">EPG</span></button>' + changrp.label + '</a></div></li>').appendTo($pvrlist);
           $changrp.find('a').on('click',{idChannelGroup: changrp.channelgroupid, strChannel: changrp.label, objParentPage: parentPage}, uiviews.PVRtvChannels);
+          $changrp.find('button.epg').on('click',{idChannelGroup: changrp.channelgroupid, strChannel: changrp.label, objParentPage: parentPage}, uiviews.PVRepgChannels);
         });
 
       return $pvrlist;
@@ -3193,6 +3245,142 @@ var uiviews = {};
         });
 
       return $pvrchan;
+    },
+    
+    /*----PVR EPG----*/
+    PVRepgGrid: function(pvrchan, parentPage) {
+      //Time now from local system, then have to take account of timezone...
+      var timeNow = new Date();
+      //One minute of programme time equals two pixels - 1m = 2px. Change the var below to alter.
+      var minToPx = 3;
+      var pvrEPG = $('<div class="epgGrid"><div class="nowTime"></div><div class="timeBar"><div class="timeBarBlank"></div><div class="timeBarTimes"></div></div></div>');
+      
+      //generate timeline bar
+      for (i=0;i<24;i++) {
+        pvrEPG.find('.timeBarTimes').append('<div class="timeBarHour"><span class="hours">' + Math.floor(timeNow.getHours() + i)%24 + '</span><div class="timeBarHalfHour"></div></div>');
+      }
+      //pvrEPG.find('.timeBarTimes').css('left', (timeNow.getHours() == 0? timeNow.getHours()*60*minToPx +100 : '-' + Math.abs(timeNow.getHours()*60*minToPx -100) + 'px'));
+      
+      $.each(pvrchan.channels, function(i, chan)  {
+        
+        var chanEPG = $('<div class="epgChan chanid' + chan.channelid + '" data-channelid="' + chan.channelid + '"><div class="channelName"><a href="" class="epgChannel' + chan.channelid + '" title="' + mkf.lang.get('Switch to channel', 'Label') + '">' + (chan.thumbnail != ''? '<img src="'+ xbmc.getThumbUrl(chan.thumbnail) +'" height="60px" class="chanIcon epgChannel">' : '<span class="epgChannel">' + chan.label + '</span>') + '</a></div></div>').appendTo(pvrEPG);
+        chanEPG.find('a.epgChannel' + chan.channelid).on('click',{idChannel: chan.channelid, strChannel: chan.label}, uiviews.pvrSwitchChannel);
+        
+        xbmc.pvrGetBroadcasts({
+          channelid: chan.channelid,
+          onSuccess: function(response) {
+            if (response.broadcasts) {
+              var firstTimeCheck = true;
+              var earliestTime = new Date().getTime();
+              var latestTime = new Date().getTime();
+              
+              var chanProgrammes = $('<div class="programmes loading"></div>');
+              
+              $.each(response.broadcasts, function(i, programme) {
+                //Ignore anything earlier than 30 minutes ago
+                //if (xbmc.sqlToEpoch(programme.endtime) > (timeNow.getTime() - 3600000) - Math.abs(timeNow.getTimezoneOffset()*60*1000)) {
+                  //Check for earliest time
+                  if (firstTimeCheck) {
+                    //console.log(xbmc.sqlToEpoch(programme.starttime))
+                    if (xbmc.sqlToEpoch(programme.starttime) < earliestTime) {
+                      //console.log(programme.broadcastid);
+                      //console.log(new Date(earliestTime).toUTCString());
+                      earliestTime = xbmc.sqlToEpoch(programme.starttime); 
+                      firstTimeCheck = false;
+                      //console.log(new Date(earliestTime).toUTCString());
+                    }
+                  }
+                  //Check for latest time
+                  if (response.broadcasts.length == i) {
+                    if (xbmc.sqlToEpoch(programme.endtime) > latestTime) { latestTime = xbmc.sqlToEpoch(programme.endtime); }
+                  }
+                  chanProgrammes.append('<div class="programme '+ programme.genre[0].replace(/\/|\s|\'/gi, '-') + '" style="width: ' + Math.floor(programme.runtime*minToPx-2) + 'px" data-broadcastid="' + programme.broadcastid + '" data-runtime="' + programme.runtime + '" data-starttime="' + programme.starttime + '" data-endtime="' + programme.endtime + '"><div class="programmeLabel"><span class="programmeLabel">' + programme.label + '</span></div>' +
+                    /*Can't really do any recording other than current, no timer support at all.
+                    '<div class="epgButtons">' +
+                      '<a href="" class="button info information" title="Information"><span class="miniIconSmall information"></span></a>' +
+                      '<a href="" class="button switch play" title="Switch"><span class="miniIconSmall play"></span></a>' +
+                      '<a href="" class="button rec recoff" title="Record"><span class="miniIconSmall recoff"></span></a>' +
+                    '</div>' +*/
+                    (programme.hastimer? '<div style="margin-top: 3px;"><img src="images/timer.png"></div>' : '') +
+                  '</div>');
+                  pvrEPG.find('.epgChan.chanid' + chan.channelid).append(chanProgrammes);
+                  if (programme.hastimer) console.log('timer: ' + programme.label);
+                  
+                  chanProgrammes.find('[data-broadcastid="' + programme.broadcastid + '"]').on({
+                    'click': function(e) {
+                      //Firefox doesn't set offset
+                      if (typeof e.offsetY === 'undefined') { e.offsetY = e.pageY - $(this).offset().top; }
+                      var parentOffset = $(this).parent().offset();
+                      var infoLeft = e.clientX;
+                      var infoTop = e.clientY - e.offsetY + $('#content').scrollTop();
+                      
+                      pvrEPG.find('.programmeInfo').empty().append('<span>' + programme.label + '</span>'+
+                        '<span>' + mkf.lang.get('Start Time:', 'Label') + xbmc.sqlToDatePlusOffset(programme.starttime).toLocaleString() + '</span>' +
+                        '<span>' + mkf.lang.get('End Time:', 'Label') + xbmc.sqlToDatePlusOffset(programme.endtime).toLocaleString() + '</span>' +
+                        '<span>' + mkf.lang.get('Run Time:', 'Label') + programme.runtime + '</span>' +
+                        '<span>' + programme.plot + '</span>' +
+                      '');
+                      
+                      //Check info window is within the page
+                      if ((infoLeft + pvrEPG.find('.programmeInfo').outerWidth() + 20) > $(document).width()) {
+                        infoLeft -= pvrEPG.find('.programmeInfo').outerWidth() + 25;
+                        pvrEPG.find('.programmeInfo').css({'left': infoLeft +'px'});
+                      } else if (infoLeft < 100) {
+                        infoLeft += pvrEPG.find('.programmeInfo').outerWidth();
+                      } else {
+                        pvrEPG.find('.programmeInfo').css({'left': infoLeft +'px'});
+                      }
+                      
+                      if ((infoTop + pvrEPG.find('.programmeInfo').height() + 20) > pvrEPG.height()) {
+                        infoTop -= pvrEPG.find('.programmeInfo').height() + 25;
+                        pvrEPG.find('.programmeInfo').css({'top': infoTop +'px'});
+                        //console.log(infoTop +'bottom change');
+                      } else if (infoTop < 10) {
+                        infoTop += pvrEPG.find('.programmeInfo').height();
+                        //console.log(infoTop +'top change');
+                      } else {
+                        pvrEPG.find('.programmeInfo').css({'top': infoTop +'px'});
+                        //console.log(infoTop +'no change');
+                      }
+                      
+                      pvrEPG.find('.programmeInfo').addClass('show');
+                      
+                      return false;
+                    }
+                  });
+                  chanProgrammes.removeClass('loading');
+                //}
+              });
+              //Offset programme times.
+              var offsetNow = timeNow.getTime() - (timeNow.getMinutes()*60*1000); //- (Math.abs(timeNow.getTimezoneOffset()*60*1000));
+              var offsetTime = earliestTime - offsetNow;
+              chanProgrammes.css('left', (offsetTime/60/1000)*minToPx + 'px');
+            }
+          },
+          onError: function(response) {
+            console.log(response);
+            mkf.messageLog.show(mkf.lang.get('Failed to retrieve list!', 'Popup message'), mkf.messageLog.status.error, 5000);
+          }
+        });
+      });
+      pvrEPG.append('<div class="programmeInfo"></div>');
+      pvrEPG.find('.programmeInfo').on({
+        /*'mouseleave': function() {
+          $(this).removeClass('show');
+        },*/
+        'click': function() {
+          $(this).removeClass('show');
+        }
+      });
+      //Show time past
+      setTimeout(function() {
+        pvrEPG.find('.nowTime').css({'height': pvrEPG[0].offsetHeight});
+        pvrEPG.find('.nowTime').animate({width: timeNow.getMinutes() *minToPx + 'px'}, 500);    
+        //console.log(pvrEPG[0].offsetHeight); 
+      }, 500);
+            
+            
+      return pvrEPG;
     },
     
     /*----TV episodes list----*/

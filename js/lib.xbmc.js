@@ -274,8 +274,59 @@ var xbmc = {};
       this.xbmcHasQuit = true;
     },
 
+    sqlToEpoch: function(sqlDate) {
+      return timestamp = new Date(sqlDate.replace(' ', 'T')).getTime();
+    },
+    
+    sqlToJsDate: function(sqlDate) {
+      console.log(sqlDate);
+      //sqlDate in SQL DATETIME format ("yyyy-mm-dd hh:mm:ss.ms")
+      var sqlDateArr1 = sqlDate.split("-");
+      //format of sqlDateArr1[] = ['yyyy','mm','dd hh:mm:ms']
+      var sYear = sqlDateArr1[0];
+      var sMonth = (Number(sqlDateArr1[1]) - 1).toString();
+      var sqlDateArr2 = sqlDateArr1[2].split(" ");
+      //format of sqlDateArr2[] = ['dd', 'hh:mm:ss.ms']
+      var sDay = sqlDateArr2[0];
+      var sqlDateArr3 = sqlDateArr2[1].split(":");
+      //format of sqlDateArr3[] = ['hh','mm','ss.ms']
+      var sHour = sqlDateArr3[0];
+      var sMinute = sqlDateArr3[1];
+      var sqlDateArr4 = sqlDateArr3[2].split(".");
+      //format of sqlDateArr4[] = ['ss','ms']
+      var sSecond = sqlDateArr4[0];
+      var sMillisecond = sqlDateArr4[1];
 
+      //console.log(sYear+sMonth+sDay+sHour+sMinute+sSecond+sMillisecond);
+      return new Date(sYear,sMonth,sDay,sHour,sMinute,sSecond,sMillisecond);
+    },
 
+    sqlToDatePlusOffset: function(sqlDate) {
+      //console.log(sqlDate);
+      var offset = new Date().getTimezoneOffset();
+      //sqlDate in SQL DATETIME format ("yyyy-mm-dd hh:mm:ss.ms")
+      var sqlDateArr1 = sqlDate.split("-");
+      //format of sqlDateArr1[] = ['yyyy','mm','dd hh:mm:ms']
+      var sYear = sqlDateArr1[0];
+      var sMonth = (Number(sqlDateArr1[1]) - 1).toString();
+      var sqlDateArr2 = sqlDateArr1[2].split(" ");
+      //format of sqlDateArr2[] = ['dd', 'hh:mm:ss.ms']
+      var sDay = sqlDateArr2[0];
+      var sqlDateArr3 = sqlDateArr2[1].split(":");
+      //format of sqlDateArr3[] = ['hh','mm','ss.ms']
+      var sHour = sqlDateArr3[0];
+      var sMinute = sqlDateArr3[1];
+      //var sqlDateArr4 = sqlDateArr3[2].split(".");
+      //format of sqlDateArr4[] = ['ss','ms']
+      var sSecond = sqlDateArr3[2];
+
+      //console.log(sYear+sMonth+sDay+sHour+sMinute+sSecond);
+      var curDate = new Date(sYear,sMonth,sDay,sHour,sMinute,sSecond);
+      //console.log(curDate);
+      //console.log(new Date(curDate.getTime() + curDate.getTimezoneOffset()*60*1000));
+      return new Date(curDate.getTime() + Math.abs(curDate.getTimezoneOffset()*60*1000));
+    },
+    
     formatTime: function (seconds) {
       var hh = Math.floor(seconds / 3600);
       var mm = Math.floor((seconds - hh*3600) / 60);
@@ -926,7 +977,7 @@ var xbmc = {};
       $.extend(settings, options);
       
       xbmc.sendCommand(
-        '{"jsonrpc": "2.0", "method": "PVR.GetChannels", "params": { "channelgroupid": ' + settings.channelgroupid + ', "properties": [ "thumbnail", "locked", "hidden", "channel", "lastplayed" ] }, "id": 1}',
+        '{"jsonrpc": "2.0", "method": "PVR.GetChannels", "params": { "channelgroupid": ' + settings.channelgroupid + ', "properties": [ "thumbnail", "locked", "hidden", "channel", "lastplayed" ] }, "id": "libGetChannels"}',
         function(reponse) {
           settings.onSuccess(reponse.result);
         },
@@ -945,12 +996,33 @@ var xbmc = {};
       $.extend(settings, options);
       
       xbmc.sendCommand(
-        '{"jsonrpc": "2.0", "method": "PVR.GetChannelDetails", "params": { "channelid": ' + settings.channelid + ', "properties": [ "thumbnail", "locked", "hidden", "channel", "lastplayed" ] }, "id": 1}',
+        '{"jsonrpc": "2.0", "method": "PVR.GetChannelDetails", "params": { "channelid": ' + settings.channelid + ', "properties": [ "thumbnail", "locked", "hidden", "channel", "lastplayed" ] }, "id": "libGetChanDets"}',
         function(reponse) {
           settings.onSuccess(reponse.result);
         },
         function(response) {
           settings.onError();
+        }
+      );
+    },
+    
+    pvrGetBroadcasts: function(options) {
+      var settings = {
+        channelid: -1,
+        start: 0,
+        end: 100,
+        onSuccess: null,
+        onError: null
+      };
+      $.extend(settings, options);
+      
+      xbmc.sendCommand(
+        '{"jsonrpc": "2.0", "method": "PVR.GetBroadcasts", "params": { "channelid": ' + settings.channelid + ', "limits": { "start" : ' + settings.start + ', "end": ' + settings.end + ' }, "properties": [ "title", "plot", "starttime", "endtime", "genre", "runtime", "progress", "progresspercentage" ,"episodename", "episodenum", "episodepart","firstaired", "hastimer", "isactive", "parentalrating","wasactive", "thumbnail" ] }, "id": "libGetBroadcasts"}',
+        function(reponse) {
+          settings.onSuccess(reponse.result);
+        },
+        function(response) {
+          settings.onError(response);
         }
       );
     },
