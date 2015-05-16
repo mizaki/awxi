@@ -2576,7 +2576,13 @@ var xbmc = {};
             '{"jsonrpc": "2.0", "id": "libNextItem", "method": "Playlist.GetItems", "params": { "properties": [ "runtime", "showtitle", "season", "title", "album", "artist", "duration", "file" ], "playlistid": ' + settings.playlistid + '}}',
 
             function(response) {
-              if (response.result.limits.total > 1) { nextItem = response.result.items[plCurPos + 1] };
+              if (response.result.limits.total > 1 && typeof response.result.items[plCurPos + 1] !== 'undefined') {
+                nextItem = response.result.items[plCurPos + 1];
+              
+              } else {
+                //Empty
+                nextItem = false;
+              }
               settings.onSuccess(nextItem);
             },
             settings.onError
@@ -2874,8 +2880,8 @@ var xbmc = {};
   $.extend(xbmc, {
     periodicUpdater: {
       volumeChangedListener: [],
-      currentlyPlayingChangedListener: [],
-      nextPlayingChangedListener: [],
+      //currentlyPlayingChangedListener: [],
+      //nextPlayingChangedListener: [],
       playerStatusChangedListener: [],
       progressChangedListener: [],
       
@@ -2883,13 +2889,13 @@ var xbmc = {};
         this.volumeChangedListener.push(fn);
       },
 
-      addCurrentlyPlayingChangedListener: function(fn) {
+      /*addCurrentlyPlayingChangedListener: function(fn) {
         this.currentlyPlayingChangedListener.push(fn);
-      },
+      },*/
 
-      addNextPlayingChangedListener: function(fn) {
+      /*addNextPlayingChangedListener: function(fn) {
         this.nextPlayingChangedListener.push(fn);
-      },
+      },*/
       
       addPlayerStatusChangedListener: function(fn) {
         this.playerStatusChangedListener.push(fn);
@@ -2905,17 +2911,17 @@ var xbmc = {};
         });
       },
 
-      fireCurrentlyPlayingChanged: function(file) {
+      /*fireCurrentlyPlayingChanged: function(file) {
         $.each(xbmc.periodicUpdater.currentlyPlayingChangedListener, function(i, listener)  {
           listener(file);
         });
-      },
+      },*/
 
-      fireNextPlayingChanged: function(file) {
+      /*fireNextPlayingChanged: function(file) {
         $.each(xbmc.periodicUpdater.nextPlayingChangedListener, function(i, listener)  {
           listener(file);
         });
-      },
+      },*/
       
       fireProgressChanged: function(progress) {
         $.each(xbmc.periodicUpdater.progressChangedListener, function(i, listener)  {
@@ -2957,16 +2963,16 @@ var xbmc = {};
             shuffleStatus: false
           });
         }
-        if (typeof xbmc.periodicUpdater.currentlyPlayingFile === 'undefined') {
+        /*if (typeof xbmc.periodicUpdater.currentlyPlayingFile === 'undefined') {
           $.extend(xbmc.periodicUpdater, {
             currentlyPlayingFile: null
           });
-        }
-        if (typeof xbmc.periodicUpdater.nextPlayingFile === 'undefined') {
+        }*/
+        /*if (typeof xbmc.periodicUpdater.nextPlayingFile === 'undefined') {
           $.extend(xbmc.periodicUpdater, {
             nextPlayingFile: null
           });
-        }        
+        }*/     
         if (typeof xbmc.periodicUpdater.progress === 'undefined') {
           $.extend(xbmc.periodicUpdater, {
             progress: 0
@@ -3025,8 +3031,6 @@ var xbmc = {};
         // ---------------------------------
         if ((this.volumeChangedListener &&
           this.volumeChangedListener.length) ||
-          (this.currentlyPlayingChangedListener &&
-          this.currentlyPlayingChangedListener.length) ||
           (this.playerStatusChangedListener &&
           this.playerStatusChangedListener.length) ||
           (this.progressChangedListener &&
@@ -3060,18 +3064,13 @@ var xbmc = {};
                 //Show controller
                 if (awxUI.settings.actionOnPlay == 0 && !awxUI.settings.remoteActive) {
                   awxUI.settings.remoteActive = true;
-                  $('#displayoverlayleft').show();
-                  $('#displayoverlaytop').show();
-                  $('#displayoverlaybot').show();
-                  $('#content').toggleClass('controls');
-                  $('#artwork').show().fadeOut(8000);
+                  awxUIdisplay.showController(true);
                 } else if (awxUI.settings.actionOnPlay == 2 || awxUI.settings.actionOnPlay == 3) {
                   xbmc.fullScreen(true);
                 }
                 //Turn on input keys if required
                 if (awxUI.settings.inputKey == 1 && !awxUI.settings.inputKeysActive) {
                   xbmc.inputKeys('on');
-                  //$('#content').addClass('controls');
                 }
               }
             },
@@ -3140,12 +3139,8 @@ var xbmc = {};
             
             xbmc.fullScreen(false);
             
-            $('#streamdets .vFormat').removeAttr('class').addClass('vFormat');
-            $('#streamdets .aspect').removeAttr('class').addClass('aspect');
-            $('#streamdets .channels').removeAttr('class').addClass('channels');
-            $('#streamdets .vCodec').removeAttr('class').addClass('vCodec');
-            $('#streamdets .aCodec').removeAttr('class').addClass('aCodec');
-            $('#streamdets .vSubtitles').css('display', 'none');
+            awxUIdisplay.mediaTags(false);
+            
             $('#content #displayoverlay #artwork .artThumb').css('margin-right','0px');
             $('#displayoverlay').css('width','510px');
             $('#content #displayoverlay #artwork .discThumb').hide();
@@ -3154,11 +3149,7 @@ var xbmc = {};
             
             //Hide controller if required
             if (awxUI.settings.actionOnPlay == 0 && awxUI.settings.remoteActive) {
-              $('#displayoverlayleft').hide();
-              $('#displayoverlaytop').hide();
-              $('#displayoverlaybot').hide();
-              $('#content').removeClass('controls');
-              $('#artwork').hide();
+              awxUIdisplay.showController(false);
             }
             if (awxUI.settings.inputKeysActive && awxUI.settings.inputKey == 1) {
               xbmc.inputKeys('off');
@@ -3203,8 +3194,6 @@ var xbmc = {};
                     
                 }
 
-                //curtime = (currentPlayer.time.hours * 3600) + (currentPlayer.time.minutes * 60) + currentPlayer.time.seconds; //time in secs
-                //curruntime = (currentPlayer.totaltime.hours * 3600) + (currentPlayer.totaltime.minutes * 60) + currentPlayer.totaltime.seconds;
                 curtime = xbmc.timeToMilliSec(currentPlayer.time);
                 curruntime = xbmc.timeToMilliSec(currentPlayer.totaltime);
                 
@@ -3221,10 +3210,12 @@ var xbmc = {};
                   }
 
                 } else if (currentPlayer.speed == 0 && xbmc.periodicUpdater.playerStatus != 'paused') {
+                  clearInterval(pollTimeRunning);
                   xbmc.periodicUpdater.playerStatus = 'paused';
                   xbmc.periodicUpdater.firePlayerStatusChanged('paused');
 
                 } else if (currentPlayer.speed == 1 && xbmc.periodicUpdater.playerStatus != 'playing') {
+                  if (pollTimeRunning === false) { xbmc.pollTimeStart() };
                   xbmc.periodicUpdater.playerStatus = 'playing';
                   xbmc.periodicUpdater.firePlayerStatusChanged('playing');
                 }
@@ -3277,10 +3268,10 @@ var xbmc = {};
             var request = '';
 
             if (xbmc.activePlayer == 'audio') {
-              request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "duration", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 0 }, "id": 1}';
+              request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "album", "artist", "duration", "thumbnail", "file", "fanart", "streamdetails", "art"], "playerid": 0 }, "id": 1}';
 
             } else if (xbmc.activePlayer == 'video') {
-              request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "season", "episode", "duration", "showtitle", "thumbnail", "file", "fanart", "streamdetails", "tvshowid"], "playerid": 1 }, "id": 1}';
+              request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["title", "season", "episode", "duration", "showtitle", "thumbnail", "file", "fanart", "streamdetails", "tvshowid", "art"], "playerid": 1 }, "id": 1}';
             }
           
             // Current file changed?
@@ -3327,29 +3318,9 @@ var xbmc = {};
                     });
                   };
                   xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
-                var getNext = function() {
-                  xbmc.getNextPlaylistItem({
-                    'playlistid': xbmc.activePlayerid,
-                    'plCurPos': xbmc.periodicUpdater.curPlaylistNum,
-                    onSuccess: function(nextItem) {
-                      if (typeof nextItem === 'undefined') {
-                        xbmc.periodicUpdater.nextPlayingFile = '';
-                        xbmc.periodicUpdater.fireNextPlayingChanged('');
-                      } else {
-                        if (nextItem.file == xbmc.periodicUpdater.currentlyPlayingFile) { getNext(); return };
-                        $.extend(nextItem, {
-                          xbmcMediaType: xbmc.activePlayer
-                        });
-                        xbmc.periodicUpdater.nextPlayingFile = nextItem.file;
-                        xbmc.periodicUpdater.fireNextPlayingChanged(nextItem);
-                      }
-                    },
-                    onError: function() {
-                      xbmc.periodicUpdater.nextPlayingFile = mkf.lang.get();
-                    }
-                  });
-                };
-                getNext();
+
+                awxUIdisplay.currentItem(currentItem);
+                awxUIdisplay.nextItem();
 
                   //Footer stream details for video
                   if (xbmc.activePlayer == 'video' && awxUI.settings.showTags) {
@@ -3382,13 +3353,9 @@ var xbmc = {};
                         streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
                         //Set audio icon
                         streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
-                          
-                        $('#streamdets .vFormat').addClass('vFormat' + streamdetails.vFormat);
-                        $('#streamdets .aspect').addClass('aspect' + streamdetails.aspect);
-                        $('#streamdets .channels').addClass('channels' + streamdetails.channels);
-                        $('#streamdets .vCodec').addClass('vCodec' + streamdetails.vCodec);
-                        $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
-                        (streamdetails.hasSubs? $('#streamdets .vSubtitles').css('display', 'block') : $('#streamdets .vSubtitles').css('display', 'none'));
+                        
+                        //Send for display
+                        awxUIdisplay.mediaTags(streamdetails);
                       };
                     };
                   }
@@ -3410,10 +3377,6 @@ var xbmc = {};
     pollTime: function() {
 
       ++xbmc.periodicUpdater.loopCount;
-      
-      //Full screen now playing
-      $('div#playing div#nowTime span#nowspan .nowPlayed').text(xbmc.formatTime(Math.floor(xbmc.periodicUpdater.progress / 1000)));
-      $('div#playing div#nowTime span#nowspan .nowRemaining').text(xbmc.formatTime(Math.floor(xbmc.periodicUpdater.progressEnd / 1000)));
       
       //Rotate media info and time
       if ((xbmc.periodicUpdater.loopCount % 45) == 0) {
@@ -3568,16 +3531,16 @@ var xbmc = {};
             shuffleStatus: false
           });
         }
-        if (typeof xbmc.periodicUpdater.currentlyPlayingFile === 'undefined') {
+        /*if (typeof xbmc.periodicUpdater.currentlyPlayingFile === 'undefined') {
           $.extend(xbmc.periodicUpdater, {
             currentlyPlayingFile: null
           });
-        }
-        if (typeof xbmc.periodicUpdater.nextPlayingFile === 'undefined') {
+        }*/
+        /*if (typeof xbmc.periodicUpdater.nextPlayingFile === 'undefined') {
           $.extend(xbmc.periodicUpdater, {
             nextPlayingFile: null
           });
-        }        
+        }     */   
         if (typeof xbmc.periodicUpdater.progress === 'undefined') {
           $.extend(xbmc.periodicUpdater, {
             progress: 0
@@ -3647,7 +3610,7 @@ var xbmc = {};
         
         addons.regAddons();
         
-        var useFanart = mkf.cookieSettings.get('usefanart', 'no')=='yes'? true : false;
+        var useFanart = awxUI.settings.useFanart;
         var showInfoTags = awxUI.settings.showTags;
         if (typeof xbmc.activePlayer === 'undefined') { xbmc.activePlayer = 'none'; }
         if (typeof xbmc.activePlayerid === 'undefined') { xbmc.activePlayerid = -1; }
@@ -3685,18 +3648,13 @@ var xbmc = {};
                       //Show controller
                       if (awxUI.settings.actionOnPlay == 0 && !awxUI.settings.remoteActive) {
                         awxUI.settings.remoteActive = true;
-                        $('#displayoverlayleft').show();
-                        $('#displayoverlaytop').show();
-                        $('#displayoverlaybot').show();
-                        $('#content').toggleClass('controls');
-                        $('#artwork').show().fadeOut(8000);
+                        awxUIdisplay.showController(true);
                       } else if (awxUI.settings.actionOnPlay == 2 || awxUI.settings.actionOnPlay == 3) {
                         xbmc.fullScreen(true);
                       }
                       //Turn on input keys if required
                       if (awxUI.settings.inputKey == 1 && !awxUI.settings.inputKeysActive) {
                         xbmc.inputKeys('on');
-                        //$('#content').addClass('controls');
                       }
                       xbmc.sendCommand(
                         '{"jsonrpc":"2.0","id":"OPProp","method":"Player.GetProperties","params":{ "playerid":' + xbmc.activePlayerid + ',"properties":["speed", "shuffled", "repeat", "subtitleenabled", "time", "totaltime", "position", "currentaudiostream", "partymode"] } }',
@@ -3725,15 +3683,6 @@ var xbmc = {};
                             //awxUI.onVideoPlaylistShow();
                           }
                           
-                          /*curtime = xbmc.timeToMilliSec(currentPlayer.time);
-                          curruntime = xbmc.timeToMilliSec(currentPlayer.totaltime);
-                          
-                          if (xbmc.periodicUpdater.progress != curtime) {
-                            xbmc.periodicUpdater.fireProgressChanged({"time": curtime, total: curruntime});
-                            xbmc.periodicUpdater.progress = curtime;
-                            xbmc.periodicUpdater.progressEnd = curruntime;
-                            xbmc.periodicUpdater.oldtime = curtime;
-                          }*/
                           if (currentPlayer.speed != 0 && currentPlayer.speed != 1 ) {
                             // not playing
                             if (xbmc.periodicUpdater.playerStatus != 'stopped') {
@@ -3830,27 +3779,10 @@ var xbmc = {};
                             $.extend(currentItem, {
                               xbmcMediaType: xbmc.activePlayer
                             });
-                            xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
+                            //xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
+                            awxUIdisplay.currentItem(currentItem);
 
-                            xbmc.getNextPlaylistItem({
-                              'playlistid': xbmc.activePlayerid,
-                              onSuccess: function(nextItem) {
-                                if (typeof nextItem === 'undefined') {
-                                  xbmc.periodicUpdater.nextPlayingFile = '';
-                                  xbmc.periodicUpdater.fireNextPlayingChanged('');
-                                } else {
-                                  
-                                  $.extend(nextItem, {
-                                    xbmcMediaType: xbmc.activePlayer
-                                  });
-                                  xbmc.periodicUpdater.nextPlayingFile = nextItem.file;
-                                  xbmc.periodicUpdater.fireNextPlayingChanged(nextItem);
-                                }
-                              },
-                              onError: function() {
-                                xbmc.periodicUpdater.nextPlayingFile = mkf.lang.get('N/A', 'Label');
-                              }
-                            });
+                            awxUIdisplay.nextItem();
 
                             //Footer stream details for video
                             if (xbmc.activePlayer == 'video' && showInfoTags) {
@@ -3884,13 +3816,9 @@ var xbmc = {};
                                   streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
                                   //Set audio icon
                                   streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
-                                    
-                                  $('#streamdets .vFormat').addClass('vFormat' + streamdetails.vFormat);
-                                  $('#streamdets .aspect').addClass('aspect' + streamdetails.aspect);
-                                  $('#streamdets .channels').addClass('channels' + streamdetails.channels);
-                                  $('#streamdets .vCodec').addClass('vCodec' + streamdetails.vCodec);
-                                  $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
-                                  (streamdetails.hasSubs? $('#streamdets .vSubtitles').css('display', 'block') : $('#streamdets .vSubtitles').css('display', 'none'));
+                                  
+                                  //Send for display
+                                  awxUIdisplay.mediaTags(streamdetails);
                                 };
                               };
                             }
@@ -3962,25 +3890,20 @@ var xbmc = {};
             xbmc.periodicUpdater.loopCount = 0;
             xbmc.periodicUpdater.progress = 0;
             xbmc.periodicUpdater.progressEnd = 0;
-            //xbmc.periodicUpdater.fireProgressChanged({"time": xbmc.periodicUpdater.progress, total: xbmc.periodicUpdater.progressEnd});
             
             if (pollTimeRunning === false) { xbmc.pollTimeStart() };
             
             //Show controller
             if (awxUI.settings.actionOnPlay == 0 && !awxUI.settings.remoteActive) {
               awxUI.settings.remoteActive = true;
-              $('#displayoverlayleft').show();
-              $('#displayoverlaytop').show();
-              $('#displayoverlaybot').show();
-              $('#content').addClass('controls');
-              $('#artwork').show().fadeOut(8000);
+              awxUIdisplay.showController(true);
             } else if (awxUI.settings.actionOnPlay == 2 || awxUI.settings.actionOnPlay == 3) {
               xbmc.fullScreen(true);
             }
+            
             //Turn on input keys if required
             if (awxUI.settings.inputKey == 1 && !awxUI.settings.inputKeysActive) {
               xbmc.inputKeys('on');
-              //$('#content').addClass('controls');
             }
               
             //Add detail as getting previous lyrics
@@ -3988,6 +3911,7 @@ var xbmc = {};
               addons.culrcLyrics();
               $('div#lyrics').scrollTo('0px',500);
             }, 1000) };
+            
             //Also activated on item change. Check incase it's slideshow.
             if (xbmc.activePlayer != 'none') {
               var request = '';
@@ -4000,129 +3924,110 @@ var xbmc = {};
                 request = '{"jsonrpc": "2.0", "method": "Player.GetItem", "params": { "properties": ["art", "title", "album", "artist", "season", "episode", "duration", "showtitle", "tvshowid", "thumbnail", "file", "fanart", "streamdetails"], "playerid": 1 }, "id": "OnPlayGetItem"}';
               }
             
-              // Current file changed?
-              xbmc.sendCommand(
-                request,
+              //Delay slightly to allow stream details to populate
+              setTimeout(function() {
+                // Current file changed?
+                xbmc.sendCommand(
+                  request,
 
-                function (response) {
-                  var currentItem = response.result.item;
-                  
-                  //PVR reports no file attrib. Copy title to file
-                  if (currentItem.type == 'channel') {
-                    currentItem.file = currentItem.title;
-                    xbmc.activePVR = true;
-                  } else {
-                    xbmc.activePVR = false;
-                  }
-                  
-                  if ( currentItem.fanart != '' && xbmc.$backgroundFanart != xbmc.getThumbUrl(currentItem.fanart) && useFanart && !awxUI.settings.useXtraFanart) {
-                    xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
-                    $('#firstBG').removeClass('transparent');
-                    $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
-                                        //TODO add check if same album don't re-query extra.
-                  } else if (awxUI.settings.useXtraFanart) {
-                    xbmc.getExtraArt({path: currentItem.file, type: 'extrafanart', tvid: currentItem.tvshowid, library: currentItem.type}, function(xart) {
-                      if (xart) {
-                        xbmc.xart = xart;
-                        $('#firstBG').removeClass('transparent');
-                        $('#firstBG').css('background-image', 'url(' + xart[0] + ')');
-                        xbmc.$backgroundFanart = xart[0];
-                        //xbmc.switchFanart();
-                      } else {
-                        //No fan xtra art found.
-                        xbmc.xart = [];
-                        if (currentItem.fanart != '') {
-                          //Use normal fanart
-                          $('#firstBG').removeClass('transparent');
-                          xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
-                          $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
-                        } else {
-                          //No fan art at all, set a 1x1px transparent base64 gif.
-                          $('#firstBG').css('background-image', 'images/black.gif');
-                          $('#secondBG').css('background-image', 'url(data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==)');
-                          $('#firstBG').removeClass('transparent');
-                          xbmc.$backgroundFanart = xbmc.getThumbUrl('images/black.gif');
-                        }
-                      }
-                    });
-                  };
-                  
-                  if (xbmc.periodicUpdater.currentlyPlayingFile != currentItem.file) {
-                    xbmc.periodicUpdater.currentlyPlayingFile = currentItem.file;
-                    $.extend(currentItem, {
-                      xbmcMediaType: xbmc.activePlayer
-                    });
-                    xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
-                    xbmc.getNextPlaylistItem({
-                      'playlistid': xbmc.activePlayerid,
-                      onSuccess: function(nextItem) {
-                        if (typeof nextItem === 'undefined') {
-                          xbmc.periodicUpdater.nextPlayingFile = '';
-                          xbmc.periodicUpdater.fireNextPlayingChanged('');
-                        } else {
-                          
-                          $.extend(nextItem, {
-                            xbmcMediaType: xbmc.activePlayer
-                          });
-                          xbmc.periodicUpdater.nextPlayingFile = nextItem.file;
-                          xbmc.periodicUpdater.fireNextPlayingChanged(nextItem);
-                        }
-                      },
-                      onError: function() {
-                        xbmc.periodicUpdater.nextPlayingFile = mkf.lang.get();
-                      }
-                    });
-
-                    //Footer stream details for video
-                    if (xbmc.activePlayer == 'video' && showInfoTags) {
-
-                      var streamdetails = {
-                        vFormat: 'SD',
-                        vCodec: 'Unknown',
-                        aCodec: 'Unknown',
-                        channels: 0,
-                        aStreams: 0,
-                        hasSubs: false,
-                        aLang: '',
-                        aspect: 0,
-                        vwidth: 0
-                      };
-                      
-                      if (currentItem.streamdetails != null && currentItem.streamdetails.video != 'undefined') {
-                        if (currentItem.streamdetails.video.length != 0) {
-                          if (currentItem.streamdetails.subtitle) { streamdetails.hasSubs = true };
-                          if (currentItem.streamdetails.audio.length != 0) {
-                            streamdetails.channels = currentItem.streamdetails.audio[0].channels;
-                            streamdetails.aStreams = currentItem.streamdetails.audio.length;
-                            //$.each(currentItem.streamdetails.audio, function(i, audio) { streamdetails.aLang += audio.language + ' ' } );
-                            //if ( streamdetails.aLang == ' ' ) { streamdetails.aLang = mkf.lang.get('label_not_available') };
-                          };
-                          streamdetails.aspect = xbmc.getAspect(currentItem.streamdetails.video[0].aspect);
-                          //Get video standard
-                          streamdetails.vFormat = xbmc.getvFormat(currentItem.streamdetails.video[0].width);
-                          //Get video codec
-                          streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
-                          //Set audio icon
-                          streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
-                            
-                          $('#streamdets .vFormat').addClass('vFormat' + streamdetails.vFormat);
-                          $('#streamdets .aspect').addClass('aspect' + streamdetails.aspect);
-                          $('#streamdets .channels').addClass('channels' + streamdetails.channels);
-                          $('#streamdets .vCodec').addClass('vCodec' + streamdetails.vCodec);
-                          $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
-                          (streamdetails.hasSubs? $('#streamdets .vSubtitles').css('display', 'block') : $('#streamdets .vSubtitles').css('display', 'none'));
-                        };
-                      };
+                  function (response) {
+                    var currentItem = response.result.item;
+                    
+                    //PVR reports no file attrib. Copy title to file
+                    if (currentItem.type == 'channel') {
+                      currentItem.file = currentItem.title;
+                      xbmc.activePVR = true;
+                    } else {
+                      xbmc.activePVR = false;
                     }
-                  };
-                }
+                    
+                    if ( currentItem.fanart != '' && xbmc.$backgroundFanart != xbmc.getThumbUrl(currentItem.fanart) && useFanart && !awxUI.settings.useXtraFanart) {
+                      xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
+                      $('#firstBG').removeClass('transparent');
+                      $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
+                                          //TODO add check if same album don't re-query extra.
+                    } else if (awxUI.settings.useXtraFanart) {
+                      xbmc.getExtraArt({path: currentItem.file, type: 'extrafanart', tvid: currentItem.tvshowid, library: currentItem.type}, function(xart) {
+                        if (xart) {
+                          xbmc.xart = xart;
+                          $('#firstBG').removeClass('transparent');
+                          $('#firstBG').css('background-image', 'url(' + xart[0] + ')');
+                          xbmc.$backgroundFanart = xart[0];
+                          //xbmc.switchFanart();
+                        } else {
+                          //No fan xtra art found.
+                          xbmc.xart = [];
+                          if (currentItem.fanart != '') {
+                            //Use normal fanart
+                            $('#firstBG').removeClass('transparent');
+                            xbmc.$backgroundFanart = xbmc.getThumbUrl(currentItem.fanart);
+                            $('#firstBG').css('background-image', 'url(' + xbmc.$backgroundFanart + ')');
+                          } else {
+                            //No fan art at all, set a 1x1px transparent base64 gif.
+                            $('#firstBG').css('background-image', 'images/black.gif');
+                            $('#secondBG').css('background-image', 'url(data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==)');
+                            $('#firstBG').removeClass('transparent');
+                            xbmc.$backgroundFanart = xbmc.getThumbUrl('images/black.gif');
+                          }
+                        }
+                      });
+                    };
+                    
+                    if (xbmc.periodicUpdater.currentlyPlayingFile != currentItem.file) {
+                      xbmc.periodicUpdater.currentlyPlayingFile = currentItem.file;
+                      $.extend(currentItem, {
+                        xbmcMediaType: xbmc.activePlayer
+                      });
+                      //xbmc.periodicUpdater.fireCurrentlyPlayingChanged(currentItem);
+                      awxUIdisplay.currentItem(currentItem);
+                      awxUIdisplay.nextItem();
+                      
+                      //Footer stream details for video
+                      if (xbmc.activePlayer == 'video' && showInfoTags) {
 
-                //null, null, true // IS async // not async
-              );
+                        var streamdetails = {
+                          vFormat: 'SD',
+                          vCodec: 'Unknown',
+                          aCodec: 'Unknown',
+                          channels: 0,
+                          aStreams: 0,
+                          hasSubs: false,
+                          aLang: '',
+                          aspect: 0,
+                          vwidth: 0
+                        };
+                        
+                        if (currentItem.streamdetails != null && currentItem.streamdetails.video != 'undefined') {
+                          if (currentItem.streamdetails.video.length != 0) {
+                            if (currentItem.streamdetails.subtitle) { streamdetails.hasSubs = true };
+                            if (currentItem.streamdetails.audio.length != 0) {
+                              streamdetails.channels = currentItem.streamdetails.audio[0].channels;
+                              streamdetails.aStreams = currentItem.streamdetails.audio.length;
+                              //$.each(currentItem.streamdetails.audio, function(i, audio) { streamdetails.aLang += audio.language + ' ' } );
+                              //if ( streamdetails.aLang == ' ' ) { streamdetails.aLang = mkf.lang.get('label_not_available') };
+                            };
+                            streamdetails.aspect = xbmc.getAspect(currentItem.streamdetails.video[0].aspect);
+                            //Get video standard
+                            streamdetails.vFormat = xbmc.getvFormat(currentItem.streamdetails.video[0].width);
+                            //Get video codec
+                            streamdetails.vCodec = xbmc.getVcodec(currentItem.streamdetails.video[0].codec);
+                            //Set audio icon
+                            streamdetails.aCodec = xbmc.getAcodec(currentItem.streamdetails.audio[0].codec);
+                            //Send for display
+                            awxUIdisplay.mediaTags(streamdetails);
+                          };
+                        };
+                      }
+                    };
+                  }
+
+                  //null, null, true // IS async // not async
+                );
+              }, 750);
             };
             
             //Delay to allow currentaudiostream to be retrieved.
-            setTimeout (function() {
+            setTimeout(function() {
               if (xbmc.activePlayer != 'none') {
                 xbmc.sendCommand(
                   '{"jsonrpc":"2.0","id":"OnPlayGetProp","method":"Player.GetProperties","params":{ "playerid":' + xbmc.activePlayerid + ',"properties":["speed", "shuffled", "repeat", "subtitleenabled", "time", "totaltime", "position", "currentaudiostream"] } }',
@@ -4148,7 +4053,7 @@ var xbmc = {};
                     }
 
                     //Stream info in footer bar. Uni UI only *Seems this won't work because incorrect details are returned*
-                    if (xbmc.activePlayer == 'audio' && showInfoTags) {
+                    /*if (xbmc.activePlayer == 'audio' && showInfoTags) {
                       var streamdetails = {
                         aCodec: 'Unknown',
                         channels: 0,
@@ -4164,13 +4069,13 @@ var xbmc = {};
                         $('#streamdets .channels').addClass('channels' + streamdetails.channels);
                         $('#streamdets .aCodec').addClass('aCodec' + streamdetails.aCodec);
                       };
-                    }
+                    }*/
                   },
 
                   null, null, true // IS async // not async
                 );
               };
-            }, 2000);
+            }, 750);
 
             
           break;
@@ -4188,30 +4093,13 @@ var xbmc = {};
 
             //Hide controller if required
             if (awxUI.settings.actionOnPlay == 0 && awxUI.settings.remoteActive) {
-              $('#displayoverlayleft').hide();
-              $('#displayoverlaytop').hide();
-              $('#displayoverlaybot').hide();
-              $('#content').removeClass('controls');
-              $('#artwork').hide();
+              awxUIdisplay.showController(false);
             }
             if (awxUI.settings.inputKeysActive && awxUI.settings.inputKey == 1) {
               xbmc.inputKeys('off');
             }
               
-            $('#streamdets .vFormat').removeAttr('class').addClass('vFormat');
-            $('#streamdets .aspect').removeAttr('class').addClass('aspect');
-            $('#streamdets .channels').removeAttr('class').addClass('channels');
-            $('#streamdets .vCodec').removeAttr('class').addClass('vCodec');
-            $('#streamdets .aCodec').removeAttr('class').addClass('aCodec');
-            $('#streamdets .vSubtitles').css('display', 'none');
-            
-            //reset display overlay
-            /*$('#displayoverlay').css('width','625px');
-            $('#displayoverlay img.discThumb').hide();
-            $('#displayoverlay img.discThumb').css('margin-left','0px');
-            $('#displayoverlay img.discThumb').css('width','194px');
-            $('#displayoverlay img.discThumb').css('width','194px');*/
-            
+            awxUIdisplay.mediaTags(false);
             awxUI.settings.remoteActive = false;
             
             xbmc.periodicUpdater.firePlayerStatusChanged('stopped');
@@ -4247,11 +4135,13 @@ var xbmc = {};
             }
           break;
           case 'Playlist.OnAdd':
-            //TODO: Update next
             if (JSONRPCnotification.params.data.playlistid == 0) {
               awxUI.onMusicPlaylistShow();
             } else if (JSONRPCnotification.params.data.playlistid == 1) {
               awxUI.onVideoPlaylistShow();
+            }
+            if (xbmc.activePlayerid != -1) {
+              awxUIdisplay.nextItem();
             }
           break;
           case 'Application.OnVolumeChanged':

@@ -3701,7 +3701,7 @@
       var seperator = $('div#now span.seperator');
       var nextElement = $footerNowBox.find('span.nextTitle');
       var timeCurRemain = $footerStatusBox.find('span.timeRemain');
-      var timeCurRemainTotal = $footerStatusBox.find('span.timeRemainTotal');
+      var timeCurRemainTotal = $footerStatusBox.find('span.timeTotal');
       var sliderElement = $('.playingSliderWrapper .playingSlider');
       
       sliderElement.slider({
@@ -3709,199 +3709,6 @@
         value: 0,
         stop: function(event, ui) {
           if (awxUI.settings.player) { xbmc.seekPercentage({percentage: ui.value}); }
-        }
-      });
-
-      xbmc.periodicUpdater.addCurrentlyPlayingChangedListener(function(currentFile) {
-        // ALL: AUDIO, VIDEO, PICTURE
-        if (currentFile.title && currentFile.title != '') { titleElement=currentFile.title; } else { titleElement = (currentFile.label? currentFile.label : mkf.lang.get('N/A', 'Label')) ; }
-
-        if (currentFile.xbmcMediaType == 'audio') {
-          // AUDIO
-          if (currentFile.type == 'channel') {
-            //label = channel, title = program name
-            if (currentFile.title) { titleElement = currentFile.title; } else { titleElement = mkf.lang.get('N/A', 'Label'); }
-            if (currentFile.label) { channelElement = currentFile.label; } else { channelElement = mkf.lang.get('N/A', 'Label'); }
-            
-            nowLabelElement.text(titleElement);
-            nowElement.text(' - ' + channelElement);
-          } else {
-            if (currentFile.artist) { artistElement = currentFile.artist; } else { artistElement = mkf.lang.get('N/A', 'Label'); }
-            if (currentFile.album) { albumElement = currentFile.album; } else { albumElement = mkf.lang.get('N/A', 'Label'); }
-            
-            //If in partymode refresh the playlist on item change.
-            if (currentFile.partymode) {
-              awxUI.onMusicPlaylistShow();
-            };
-            nowLabelElement.text(titleElement);
-            nowArtistElement.text(artistElement);
-            seperator.text(' - ');
-            nowElement.text(' - ' + albumElement);
-          };
-        } else if (currentFile.xbmcMediaType == 'video') {
-          // VIDEO
-
-          if (currentFile.type == 'episode') {
-
-            tvshowElement = currentFile.showtitle;
-            seasonElement = currentFile.season;
-            episodeElement = currentFile.episode;
-            seperator.text(' - ');
-            
-            nowLabelElement.text(titleElement);
-            nowElement.text(tvshowElement + ' - S' + seasonElement + 'E' + episodeElement);
-
-          } else if (currentFile.type == 'channel') {
-            //label = channel, title = program name
-            if (currentFile.title) { titleElement = currentFile.title; } else { titleElement = mkf.lang.get('N/A', 'Label'); }
-            if (currentFile.label) { channelElement = currentFile.label; } else { channelElement = mkf.lang.get('N/A', 'Label'); }
-            
-            nowLabelElement.text(titleElement);
-            nowElement.text(' - ' + channelElement);
-          } else if (currentFile.type == 'musicvideo') {
-            if (currentFile.artist) { artistElement = currentFile.artist; } else { artistElement = mkf.lang.get('N/A', 'Label'); }
-            if (currentFile.album) { albumElement = currentFile.album; } else { albumElement = mkf.lang.get('N/A', 'Label'); }
-            
-            //hack for partymode playlist refresh - *change to playlist notification*
-            if (currentFile.partymode) {
-              awxUI.onVideoPlaylistShow();
-            };
-            nowLabelElement.text(titleElement);
-            nowElement.text(' - ' + artistElement);
-          } else {
-            nowLabelElement.text(titleElement);
-          }
-        }
-        
-        //thumbElement.attr('src', 'images/thumbPoster.png');
-        var thumb = new Image();
-        //if (currentFile.thumbnail != '') { thumb.src = xbmc.getThumbUrl(currentFile.thumbnail) };
-        
-        //if (currentFile.thumbnail != '') {
-          //thumbElement.attr('src', xbmc.getThumbUrl(currentFile.thumbnail));
-          if (currentFile.type == 'episode') {
-            //if ($('#displayoverlay').css('width') != '656px') { $('#displayoverlay').css('width','656px') };
-            thumbElement.attr('src', 'images/empty_thumb_tv.png');
-            if (currentFile.thumbnail != '') { thumb.src = xbmc.getThumbUrl(currentFile.thumbnail) };
-            thumb.onload = function() { thumbElement.attr('src', thumb.src) };
-            thumbElement.css('margin-top', '120px');
-            thumbElement.css('margin-left', '5px');
-            thumbElement.css('width', '255px');
-            thumbElement.css('height', '163px');
-            
-            /*xbmc.getLogo({path: currentFile.file, type: 'logo'}, function(logo) {
-              console.log(currentFile);
-              thumbDiscElement.attr('src', logo);
-              if (thumbDiscElement.css('width') != '200px') { thumbDiscElement.css('width','200px'); thumbDiscElement.css('height','78px'); };
-              thumbDiscElement.show();
-              
-            });*/
-          } else if (currentFile.xbmcMediaType == 'audio') {
-            //if ($('#displayoverlay').css('width') != '510px') { $('#displayoverlay').css('width','510px') };
-            thumbElement.attr('src', 'images/empty_cover_musicO.png');
-            if (currentFile.thumbnail != '') { thumb.src = xbmc.getThumbUrl(currentFile.thumbnail) };
-            thumb.onload = function() { thumbElement.attr('src', thumb.src) };
-            thumbElement.css('margin-top', '57px');
-            thumbElement.css('margin-left', '35px');
-            thumbElement.css('height', '225px');
-            thumbElement.css('width', '225px');
-            if (thumbDiscElement.css('width') != '225px') { thumbDiscElement.css('width','225px'); thumbDiscElement.css('height','225px'); };
-              
-            xbmc.getLogo({path: currentFile.file, type: 'cdart'}, function(cdart) {
-              if (cdart == '') {
-                thumbDiscElement.hide();
-              } else {thumbDiscElement.css('margin-left','35px');
-                thumbDiscElement.attr('src', cdart);
-                thumbDiscElement.show();
-                
-                if (rotateCDart) {
-                  var angle = 0;
-                  spinCDArt = setInterval(function(){
-                  angle+=3;
-                    thumbDiscElement.rotate(angle);
-                  },75);
-                };
-              };
-            });
-          } else if (currentFile.type == 'channel') {
-            thumbElement.css('margin-top', '57px');
-            thumbElement.css('margin-left', '35px');
-            thumbElement.css('height', '225px');
-            thumbElement.css('width', '225px');
-            
-          } else if (currentFile.type == 'movie') {
-            thumbElement.attr('src', 'images/empty_poster_film.png');
-            if (currentFile.thumbnail != '') { thumb.src = xbmc.getThumbUrl(currentFile.thumbnail) };
-            thumb.onload = function() { thumbElement.attr('src', thumb.src) };
-            
-            thumbElement.css('margin-top', '0px');
-            thumbElement.css('margin-left', '70px');
-            thumbElement.css('height', '280px');
-            thumbElement.css('width', '187px');
-            xbmc.getLogo({path: currentFile.file, type: 'disc'}, function(cdart) {
-              if (cdart != '') {
-                $('#displayoverlay').css('width','720px');
-                thumbElement.css('margin-right','100px');
-                //#displayoverlay width: 600px;
-                //.discThumb width: 270px; height: 270px; margin-left: 20px;
-                thumbDiscElement.css('width','270px');
-                thumbDiscElement.css('height','270px');
-                thumbDiscElement.css('margin-left','-20px');
-                thumbDiscElement.attr('src', cdart);
-                thumbDiscElement.show();
-                
-                if (rotateCDart) {
-                  var angle = 0;
-                  spinCDArt = setInterval(function(){
-                  angle+=3;
-                    thumbDiscElement.rotate(angle);
-                  },75);
-                }
-              }
-            });
-            
-          } else if (currentFile.type == 'musicvideo') {
-            thumbElement.attr('src', 'images/empty_cover_musicvideo.png');
-            if (currentFile.thumbnail != '') { thumb.src = xbmc.getThumbUrl(currentFile.thumbnail) };
-            thumb.onload = function() { thumbElement.attr('src', thumb.src) };
-            thumbElement.css('margin-top', '57px');
-            thumbElement.css('margin-left', '35px');
-            thumbElement.css('height', '225px');
-            thumbElement.css('width', '225px');
-          };
-
-        //}
-      });
-      
-      xbmc.periodicUpdater.addNextPlayingChangedListener(function(nextFile) {
-        // ALL: AUDIO, VIDEO, PICTURE
-        if (nextFile.title) { titleElement=nextFile.title; } else { titleElement = (nextFile.label? nextFile.label : '') ; }
-
-        if (nextFile.xbmcMediaType == 'audio') {
-          // AUDIO
-          if (nextFile.artist) { artistElement = nextFile.artist; } else { artistElement = mkf.lang.get('N/A', 'Label'); }
-          if (nextFile.album) { albumElement = nextFile.album; } else { albumElement = mkf.lang.get('N/A', 'Label'); }
-          
-          nextElement.text(titleElement + ' - ' + artistElement + ' - ' + albumElement);
-          //nowElement.text(' - ' + artistElement + ' - ' + albumElement);
-        } else {
-          // VIDEO
-
-          if (nextFile.season &&
-            nextFile.episode &&
-            nextFile.showtitle) {
-
-            thumbDiscElement.attr('src', '');
-            tvshowElement = nextFile.showtitle;
-            seasonElement = nextFile.season;
-            episodeElement = nextFile.episode;
-            
-            nextElement.text(titleElement + ' - ' + tvshowElement + ' - S' + seasonElement + 'E' + episodeElement);
-            //nowElement.text(' - ' + tvshowElement + ' - S' + seasonElement + 'E' + episodeElement);
-
-          } else {
-            nextElement.text(titleElement);
-          }
         }
       });
         
@@ -3973,14 +3780,19 @@
       
       xbmc.periodicUpdater.addProgressChangedListener(function(progress) {
         //console.log(progress);
+        
+        //Send time to display function
+        awxUIdisplay.timeKeeping(progress.time, progress.total);
+        
         progress.total = Math.floor(progress.total / 1000);
         progress.time = Math.floor(progress.time / 1000);
         
         //console.log(progress.time);
         //console.log(xbmc.formatTime(progress.total - progress.time));
         
-        timeCurRemain.text(xbmc.formatTime(progress.total - progress.time));
-        timeCurRemainTotal.text(xbmc.formatTime(progress.total));
+        
+        /*timeCurRemain.text(xbmc.formatTime(progress.total - progress.time));
+        timeCurRemainTotal.text(xbmc.formatTime(progress.total));*/
         //durationElement.text(progress.total);
         sliderElement.slider("option", "value", 100 * progress.time / progress.total);
       });
