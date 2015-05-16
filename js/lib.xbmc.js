@@ -3866,6 +3866,7 @@ var xbmc = {};
             }, 1000);
         };
         ws.onerror = function (err) {
+          //onerror and onclose both fired. Use only one to avoid error counting issues. No way to tell the difference between refused and closed?
           console.log(err);
         };
         ws.onmessage = function (e) {
@@ -4237,18 +4238,26 @@ var xbmc = {};
           }
         };
         ws.onclose = function (e) {
-          console.log(e);
-          if (e.code == 1006) {
-            //Abnormal close (most likely websockets are unavailble).
+          xbmc.inErrorState++;
+          setTimeout(function() {
+            mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
+            
             //Check to see if XBMC /is/ running
             xbmc.sendCommand(
               '{"jsonrpc": "2.0", "method": "JSONRPC.Ping",  "id": "WSClosePing"}',
               function (response) {
                 if (response.result == 'pong') {
-                  //XBMC is responding. Switch to polling.
-                  console.log('Failed to open websocket after ' + xbmc.inErrorState + ' attempts, switching to polling');
-                  mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 8000);
-                  setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
+                  //XBMC is responding. Relaunch websocket
+                  if (xbmc.inErrorState < 4) {
+                    console.log('ws.close retrying... ' + xbmc.inErrorState);
+                    mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, retrying...', 'Popup message'), mkf.messageLog.status.error, 5000);
+                    xbmc.wsListener();
+                  } else {
+                    //Cannot open websocket, switch to polling
+                    console.log('Failed to open websocket after ' + xbmc.inErrorState + ' attempts, switching to polling');
+                    mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 8000);
+                    setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
+                  }
                 } else {
                   $('body').empty();
                   mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
@@ -4256,37 +4265,7 @@ var xbmc = {};
                 }
               }
             );
-          } else {
-            xbmc.inErrorState++;
-            setTimeout(function() {
-              mkf.messageLog.appendTextAndHide(WSmessageHandle, mkf.lang.get('Failed!', 'Popup message addition'), 2000, mkf.messageLog.status.error);
-              
-              //Check to see if XBMC /is/ running
-              xbmc.sendCommand(
-                '{"jsonrpc": "2.0", "method": "JSONRPC.Ping",  "id": "WSClosePing"}',
-
-                function (response) {
-                  if (response.result == 'pong') {
-                    //XBMC is responding. Relaunch websocket
-                    if (xbmc.inErrorState < 4) {
-                      console.log('ws.close retrying... ' + xbmc.inErrorState);
-                      mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, retrying...', 'Popup message'), mkf.messageLog.status.error, 5000);
-                      xbmc.wsListener();
-                    } else {
-                      //Cannot open websocket, switch to polling
-                      console.log('Failed to open websocket after ' + xbmc.inErrorState + ' attempts, switching to polling');
-                      mkf.messageLog.show(mkf.lang.get('Failed to connect to websocket, switching to polling...', 'Popup message'), mkf.messageLog.status.error, 8000);
-                      setTimeout($.proxy(xbmc.periodicUpdater, "periodicStep"), 20);
-                    }
-                  } else {
-                    $('body').empty();
-                    mkf.dialog.show({content:'<h1>' + mkf.lang.get('XBMC has quit. You can close this window.') + '</h1>', closeButton: false});
-                    xbmc.setHasQuit();
-                  }
-                }
-              );
-            }, 2000);
-          }
+          }, 2000);
         };
 
     }
