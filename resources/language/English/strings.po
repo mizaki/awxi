@@ -375,6 +375,10 @@ msgid "Failed to start recording"
 msgstr ""
 
 msgctxt "Popup message"
+msgid "Saved Kodi setting"
+msgstr ""
+
+msgctxt "Popup message"
 msgid "Failed to load Kodi settings!"
 msgstr ""
 
@@ -1115,6 +1119,10 @@ msgid "Poster"
 msgstr ""
 
 msgctxt "Label"
+msgid "Switch to channel"
+msgstr ""
+
+msgctxt "Label"
 msgid "Fan Art"
 msgstr ""
 
@@ -1204,6 +1212,14 @@ msgstr ""
 
 msgctxt "Label"
 msgid "Run Time:"
+msgstr ""
+
+msgctxt "Label"
+msgid "Start Time:"
+msgstr ""
+
+msgctxt "Label"
+msgid "End Time:"
 msgstr ""
 
 msgctxt "Label"

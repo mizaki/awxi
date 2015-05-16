@@ -2853,6 +2853,29 @@
     },
     
     /*********************************************
+     * Called when PVR EPG Page is shown.    *
+     *********************************************/
+    onPVRepgGrid: function() {
+      if (this.$pvrepgContent.html() == '') {
+        var pvrepgPage = this.pvrepgPage;
+        var $contentBox = this.$pvrepgContent;
+        $contentBox.addClass('loading');
+
+        xbmc.pvrGetChannels({
+          onError: function() {
+            //mkf.messageLog.show(mkf.lang.get('Failed to retrieve list!', 'Popup message'), mkf.messageLog.status.error, 5000);
+            $contentBox.removeClass('loading');
+          },
+
+          onSuccess: function(result) {
+            $contentBox.defaultPVRViewer(result, pvrtvPage);
+            $contentBox.removeClass('loading');
+          }
+        });
+      }
+    },
+    
+    /*********************************************
      * Called when Video-Files-Page is shown.    *
      *********************************************/
     onVideoFilesShow: function() {
