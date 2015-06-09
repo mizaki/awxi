@@ -107,7 +107,9 @@
         xbmc.input({type: 'Select', onError: failed}); return false;
       });
       $inputcontrols.find('.contextMenu').click(function() {
-        xbmc.input({type: 'ContextMenu', onError: failed}); return false;
+        xbmc.input({type: 'ContextMenu', onError: failed});
+        xbmc.input({type: 'ShowOSD', onError: failed});
+        return false;
       });
       $inputcontrols.find('.info').click(function() {
         xbmc.input({type: 'Info', onError: failed}); return false;
@@ -386,7 +388,9 @@
         xbmc.input({type: 'Select', onError: failed}); return false;
       });
       $inputcontrols.find('.contextMenu').click(function() {
-        xbmc.input({type: 'ContextMenu', onError: failed}); return false;
+        xbmc.input({type: 'ContextMenu', onError: failed});
+        xbmc.input({type: 'ShowOSD', onError: failed});
+        return false;
       });
       $inputcontrols.find('.info').click(function() {
         xbmc.input({type: 'Info', onError: failed}); return false;
@@ -452,7 +456,9 @@
         xbmc.input({type: 'Select', onError: failed}); return false;
       });
       $inputcontrols.find('.contextMenu').click(function() {
-        xbmc.input({type: 'ContextMenu', onError: failed}); return false;
+        xbmc.input({type: 'ContextMenu', onError: failed});
+        xbmc.input({type: 'ShowOSD', onError: failed});
+        return false;
       });
       $inputcontrols.find('.info').click(function() {
         xbmc.input({type: 'Info', onError: failed}); return false;
@@ -796,7 +802,9 @@
           xbmc.input({type: 'Select', onError: failed}); return false;
         });
         $('.bigContextMenu').click(function() {
-          xbmc.input({type: 'ContextMenu', onError: failed}); return false;
+          xbmc.input({type: 'ContextMenu', onError: failed});
+          xbmc.input({type: 'ShowOSD', onError: failed});
+          return false;
         });
         $('.bigInfo').click(function() {
           xbmc.input({type: 'Info', onError: failed}); return false;
