@@ -3983,7 +3983,8 @@ var uiviews = {};
           $addonsList.find('form#youtubeplay').on('submit', function() {
             var messageHandle = mkf.messageLog.show(mkf.lang.get('Playing...', 'Popup message with addition'));
             //Grab you tube id and make playable uri.
-            var ytid = $('input#ytplay').val().substr($('input#ytplay').val().lastIndexOf("=") + 1);
+            var ytplay = $('input#ytplay').val();
+            var ytid = uiviews.UrlParam('v', ytplay);
             var fullURL = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + ytid;
             
             xbmc.playerOpen({
@@ -5067,7 +5068,21 @@ var uiviews = {};
       mkf.dialog.setContent(dialogHandle, dialogContent);
 
       return false;
+    },
+
+    /*----------------------------------------------------*/
+    /*               Handle URL parameters 
+    /* (http://www.sitepoint.com/url-parameters-jquery/)  */
+    /*----------------------------------------------------*/                                                                  
+    UrlParam: function(name, url) {
+      var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(url);
+      if (results == null) {
+        return null;
+      }
+      else {
+        return results[1] || 0;
+      }
     }
-    
+
   }); // END ui.views
 })(jQuery);
