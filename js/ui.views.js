@@ -3984,8 +3984,7 @@ var uiviews = {};
             var messageHandle = mkf.messageLog.show(mkf.lang.get('Playing...', 'Popup message with addition'));
             //Grab you tube id and make playable uri.
             var ytid = $('input#ytplay').val().substr($('input#ytplay').val().lastIndexOf("=") + 1);
-            var fullURL = 'plugin://plugin.video.youtube/?action=play_video&videoid=' + ytid;
-            
+            var fullURL = 'plugin://plugin.video.youtube/play/?video_id=' + ytid;
             xbmc.playerOpen({
               item: 'file',
               itemStr: fullURL,
